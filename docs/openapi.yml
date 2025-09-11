@@ -1,0 +1,263 @@
+openapi: 3.0.3
+info:
+  title: Samsung Chess App API
+  description: API for moves and retrieving game play records
+  version: 1.0.0
+paths:
+  /api/user:
+    post:
+      summary: Create a user with user id
+      description: Create a user
+      operationId: createUser
+      tags:
+        - User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                  example: asdhfawherpohweporhewioprhewpo
+      responses:
+        "200":
+          description: succesfull response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: string
+                    example: succesfully created user
+        "500":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/gameplay/{user_id}/game:
+    post:
+      summary: Create a new game
+      description: Create a new game or start a new game
+      tags:
+        - Gameplay
+      parameters:
+        - name: user_id
+          in: path
+          description: Unique identifier of the user/player
+          required: true
+          schema:
+            type: string
+            format: uuid
+            example: 23u7230ohdfohdfod-ewjarlewjr
+      responses:
+        "200":
+          description: success response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      project_id:
+                        type: string
+                        example: iweurpoweru2uiohewkrn
+  /api/gameplay/game/{game_id}/move:
+    post:
+      summary: Post player game moves for every move
+      description: Post player's move to store and get a response of the bot's move
+      operationId: postMove
+      tags:
+        - Gameplay
+      parameters:
+        - name: game_id
+          in: path
+          description: Unique identifier of the game session
+          required: true
+          schema:
+            type: string
+            format: uuid
+            example: 2c474d33-f993-45c8-96e8-54ffa39ecc5f
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                player_move:
+                  type: string
+                  description: player's move
+                  example: f1f3
+                fen:
+                  type: string
+                  description: snapshot or FEN of the current chess board
+                  example: rnbqkbnr/pppppppp/8/8/8/5N2/PPPPPPPP/RNBQKB1R b KQkq - 1 1
+                bot_level:
+                  type: string
+                  example: "easy"
+              required:
+                - field1
+      responses:
+        "200":
+          description: Successful response with bot's move
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bot_move:
+                    type: string
+                    description: bot's reply move to player's move
+                    example: e5e6
+                  fen:
+                    type: string
+                    description: snapshot of the current chess board after bot's move
+                    example: rnbqkbnr/pppp1ppp/8/4p3/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 0 2
+        "500":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/analysis/{user_id}/games:
+    get:
+      summary: Get a list of game histories
+      description: Retrieves a list of games that has already ended (history)
+      tags:
+        - Game History
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: Unique identifier of the user/player
+          schema:
+            type: string
+            format: uuid
+            example: u23403u24oh32o4pph23po12
+      responses:
+        "200":
+          description: response body of history list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                          example: "22/07/2025"
+                        game_id:
+                          type: string
+                          example: i3j4ojopadshfperewr
+                        move_amount:
+                          type: number
+                          example: 34
+        "500":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/analysis/game/{game_id}/{move_order}:
+    get:
+      summary: Get the move and best move for that order
+      description: Retrieves the move and best move during a specific order that happens in the game
+      tags:
+        - Analysis
+      parameters:
+        - name: game_id
+          in: path
+          description: Unique identifier of the game
+          required: true
+          schema:
+            type: string
+            format: uuid
+            example: 5126f1ea-16ca-489d-8d98-eab1fecfdda7
+        - name: move_order
+          in: path
+          description: The order of the move (eg. 1, 2, 3, 4, ....)
+          required: true
+          schema:
+            type: number
+            example: 1
+      responses:
+        "200":
+          description: Successful response with move and best move for analysis feature
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  move:
+                    type: string
+                    example: f3f7
+                  best_move:
+                    type: string
+                    example: e4e5
+                  fen:
+                    type: string
+                    example: rnbqkbnr/pp3ppp/8/2ppp3/3P4/2P2N2/PP2PPPP/RNBQKB1R w KQkq - 0 4
+        "500":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/study/convert_image:
+    post:
+      summary: Upload an image to convert into FEN
+      description: Uploads a single image file to convert into FEN so that you can move pieces form that snapshot
+      tags:
+        - Study
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The image file to upload
+      responses:
+        "200":
+          description: Image uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  fen:
+                    type: string
+                    example: rnbqkbnr/pp3ppp/8/2ppp3/3P4/2P2N2/PP2PPPP/RNBQKB1R w KQkq - 0 4
+        "500":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Server Error"
+        message:
+          type: string
+          example: "Looks like there's something wrong"
+      required:
+        - error
+        - message

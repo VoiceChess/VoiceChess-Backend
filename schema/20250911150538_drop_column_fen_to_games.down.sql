@@ -1,0 +1,1 @@
+ALTER TABLE public.games ADD COLUMNT fen varchar(255);

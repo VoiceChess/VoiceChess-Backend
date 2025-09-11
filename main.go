@@ -1,11 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"log"
+
 	"samsungvoicebe/config"
+	"samsungvoicebe/db"
 	"samsungvoicebe/middleware"
+	"samsungvoicebe/repo"
 	"samsungvoicebe/routes"
+	"samsungvoicebe/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,6 +21,22 @@ func main() {
 	} else {
 		log.Fatal("❌ GEMINI_API_KEY not configured")
 	}
+
+	database, err := db.New()
+	if err != nil {
+		log.Fatal("❌ Failed to connect to database:", err)
+	}
+	defer database.Close()
+
+	log.Println("✅ Database connected successfully")
+
+	gameplayRepo := repo.NewGameplayRepo(database)
+	analysisRepo := repo.NewAnalysisRepo(database)
+	userRepo := repo.NewUserRepo(database)
+
+	analysisService := services.NewAnalysisService(analysisRepo)
+	gameplayService := services.NewGameplayService(gameplayRepo, analysisService)
+	userService := services.NewUserService(userRepo)
 
 	gin.SetMode(cfg.GinMode)
 
@@ -41,7 +60,16 @@ func main() {
 	chessApi := r.Group("/api/chess")
 	routes.ChessRoutes(chessApi, cfg)
 
-	fmt.Printf("Base URL: http://localhost:%s/\n", cfg.Port)
+	gameplayApi := r.Group("/api/gameplay")
+	routes.GameplayRoutes(gameplayApi, cfg, gameplayService)
+
+	analysisApi := r.Group("/api/analysis")
+	routes.AnalysisRoutes(analysisApi, cfg, analysisService)
+
+	userApi := r.Group("/api/user")
+	routes.UserRoutes(userApi, cfg, userService)
+
+	log.Printf("Base URL: http://localhost:%s/\n", cfg.Port)
 
 	if err := r.Run(":" + cfg.Port); err != nil {
 		log.Fatal("❌ Failed to start server:", err)

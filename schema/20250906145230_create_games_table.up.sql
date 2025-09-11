@@ -1,0 +1,9 @@
+CREATE TABLE public.games (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    fen VARCHAR(500) NOT NULL,
+    result VARCHAR(10) NOT NULL,
+    end_type VARCHAR(50) NOT NULL,
+    move_amount INT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);

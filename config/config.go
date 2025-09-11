@@ -11,6 +11,7 @@ type Config struct {
 	GeminiAPIKey string
 	Port         string
 	GinMode      string
+	PostgresURL  string
 }
 
 func LoadConfig() *Config {
@@ -22,6 +23,7 @@ func LoadConfig() *Config {
 		GeminiAPIKey: os.Getenv("GEMINI_API_KEY"),
 		Port:         getEnvOrDefault("PORT", "8080"),
 		GinMode:      getEnvOrDefault("GIN_MODE", "release"),
+		PostgresURL:  os.Getenv("POSTGRES_URL"),
 	}
 
 	return config

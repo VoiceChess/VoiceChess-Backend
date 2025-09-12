@@ -16,6 +16,9 @@ COPY . .
 RUN CGO_ENABLED=1 go build -o main .
 
 FROM --platform=linux/amd64 ubuntu:22.04
+
+ENV PATH="/usr/games:${PATH}"
+
 RUN apt-get update && apt-get install -y stockfish && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /root/

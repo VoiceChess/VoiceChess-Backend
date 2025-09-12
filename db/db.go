@@ -8,7 +8,7 @@ import (
 )
 
 func New() (*sql.DB, error) {
-	databaseUrl := "postgres://postgres@localhost:5432/chessmate?sslmode=disable"
+	databaseUrl := "postgresql://postgres.akzxyqjulxohiwoejhny:9n6jfhPachFY4Bhg@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres"
 	if databaseUrl == "" {
 		return nil, fmt.Errorf("POSTGRESQL_URL environment variable not set")
 	}

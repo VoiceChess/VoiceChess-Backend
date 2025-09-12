@@ -22,6 +22,7 @@ ENV PATH="/usr/games:${PATH}"
 RUN apt-get update && apt-get install -y stockfish && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /root/
+COPY .env.docker .env
 COPY --from=builder /app/main .
 COPY --from=builder /app/schema ./schema
 

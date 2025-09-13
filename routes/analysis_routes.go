@@ -12,4 +12,5 @@ func AnalysisRoutes(router *gin.RouterGroup, cfg *config.Config, service *servic
 
 	router.GET("/:user_id/games", analysisController.GetGameHistoryList)
 	router.GET("/game/:game_id/move/:move_order", analysisController.GetAnalyzedMoveByOrder)
+	router.POST("/fen-from-image", analysisController.GetFenFromPicture)
 }

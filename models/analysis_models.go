@@ -27,3 +27,14 @@ const (
 	BotLevelMedium = 5
 	BotLevelhard   = 10
 )
+
+const GetFenFromPicturePrompt = `
+	You are an OCR (Optical Character Recognition) expert. Your task is to extract the Forsyth-Edwards Notation (FEN)
+	from the given picture. The FEN is a standard notation for describing 
+	a particular board position of a chess game.
+	I noticed that FEN contains other informations like active color, castling availability, en passant target square, halfmove clock, and fullmove number, etc.
+	However, for this task, we are only interested in the piece placement part of the FEN.
+	Other informations can be filled with anything that is valid for FEN.
+	given the following picture, extract the FEN string that represents the piece placement on the chessboard.
+	Respond with only the FEN string and nothing else.
+`

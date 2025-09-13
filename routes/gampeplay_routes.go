@@ -12,4 +12,8 @@ func GameplayRoutes(router *gin.RouterGroup, cfg *config.Config, service *servic
 
 	router.POST("/game/:game_id/move", gameplayController.PlayerMove)
 	router.POST("/:user_id/game", gameplayController.CreateGame)
+	router.POST("/hint", gameplayController.GetHint)
+	router.POST("/move-by-voice", gameplayController.PlayerMoveByVoiceTranscription)
+	router.POST("/game/move", gameplayController.PlayerMove)
+
 }

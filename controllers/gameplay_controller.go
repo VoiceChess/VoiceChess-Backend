@@ -32,7 +32,15 @@ func (gc *GameplayController) PlayerMove(c *gin.Context) {
 		return
 	}
 
-	botMove, err := gc.Service.PlayerMove(gameID, req.Fen, req.Move, req.BotLevel)
+	var botMove models.BotMove
+	var err error
+
+	if gameID != "" {
+		botMove, err = gc.Service.PlayerMove(&gameID, req.Fen, req.Move, req.BotLevel)
+	} else {
+		botMove, err = gc.Service.PlayerMove(nil, req.Fen, req.Move, req.BotLevel)
+	}
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		log.Println("GameplayController-PlayerMove-PlayerMove", err)
@@ -58,5 +66,47 @@ func (gc *GameplayController) CreateGame(c *gin.Context) {
 		"data": gin.H{
 			"game_id": gameID,
 		},
+	})
+}
+
+func (gc *GameplayController) GetHint(c *gin.Context) {
+	var req models.HintRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		log.Println("GameplayController-GetHint-JsonBinding", err)
+		return
+	}
+
+	hint, err := gc.Service.GetHint(req.Fen)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Println("GameplayController-GetHint-GetHint", err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": gin.H{
+			"hint": hint,
+		},
+	})
+}
+
+func (gc *GameplayController) PlayerMoveByVoiceTranscription(c *gin.Context) {
+	var req models.PlayerMoveByTranscriptionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		log.Println("GameplayController-PlayerMoveByVoiceTranscription-JsonBinding", err)
+		return
+	}
+
+	playerMove, err := gc.Service.PlayerMoveByVoiceTranscription(req.Fen, req.Transcription)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Println("GameplayController-PlayerMoveByVoiceTranscription-PlayerMoveByVoiceTranscription", err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": playerMove,
 	})
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/notnil/chess"
 	"github.com/notnil/chess/uci"
+	"samsungvoicebe/helper"
 	"samsungvoicebe/models"
 	"samsungvoicebe/repo"
 )
@@ -106,7 +107,7 @@ func (a *AnalysisService) GetAnalyzedMoveByOrder(moveOrder int, gameID string) (
 		Move: move.Move,
 		Fen:  move.Fen,
 	}
-	
+
 	stockfishResult, err := a.StockfishAnalyze(move.Fen, "hard")
 	if err != nil {
 		err = fmt.Errorf("AnalysisService-GetAnalyzedMoveByOrder-StockfishAnalyze: %w", err)
@@ -116,4 +117,14 @@ func (a *AnalysisService) GetAnalyzedMoveByOrder(moveOrder int, gameID string) (
 	analyzedMove.BestMove = stockfishResult.BestMove
 
 	return analyzedMove, nil
+}
+
+func (a *AnalysisService) GetFenFromPicture(imageFile []byte) (string, error) {
+	fen, err := helper.AnalyzePictureWithGemini(imageFile, models.GetFenFromPicturePrompt)
+	if err != nil {
+		err = fmt.Errorf("AnalysisService-GetFenFromPicture-AnalyzePictureWithGemini: %w", err)
+		return "", err
+	}
+
+	return fen, nil
 }

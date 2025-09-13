@@ -49,3 +49,33 @@ func (ac *AnalysisController) GetAnalyzedMoveByOrder(c *gin.Context) {
 
 	c.JSON(200, gin.H{"data": analyzedMove})
 }
+
+func (ac *AnalysisController) GetFenFromPicture(c *gin.Context) {
+	file, err := c.FormFile("image")
+	if err != nil {
+		c.JSON(400, gin.H{"error": "Image file is required"})
+		return
+	}
+
+	imageFile, err := file.Open()
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to open image file"})
+		return
+	}
+	defer imageFile.Close()
+
+	imageData := make([]byte, file.Size)
+	_, err = imageFile.Read(imageData)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to read image file"})
+		return
+	}
+
+	fen, err := ac.Service.GetFenFromPicture(imageData)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{"data": fen})
+}

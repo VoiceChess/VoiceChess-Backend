@@ -20,6 +20,7 @@ FROM --platform=linux/amd64 ubuntu:22.04
 ENV PATH="/usr/games:${PATH}"
 
 RUN apt-get update && apt-get install -y stockfish && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y ca-certificates && update-ca-certificates
 
 WORKDIR /root/
 COPY .env.docker .env

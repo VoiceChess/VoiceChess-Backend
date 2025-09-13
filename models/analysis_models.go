@@ -37,4 +37,6 @@ const GetFenFromPicturePrompt = `
 	Other informations can be filled with anything that is valid for FEN.
 	given the following picture, extract the FEN string that represents the piece placement on the chessboard.
 	Respond with only the FEN string and nothing else.
+	If the image is not an image of a chessboard or if you cannot determine the FEN, respond with "InvalidImage" and nothing else.
 `
+const InvalidImage = "InvalidImage"

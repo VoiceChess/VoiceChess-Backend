@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/notnil/chess"
 	"github.com/notnil/chess/uci"
@@ -121,7 +122,8 @@ func (a *AnalysisService) GetAnalyzedMoveByOrder(moveOrder int, gameID string) (
 
 func (a *AnalysisService) GetFenFromPicture(imageFile []byte) (string, error) {
 	fen, err := helper.AnalyzePictureWithGemini(imageFile, models.GetFenFromPicturePrompt)
-	if err != nil {
+	fen = strings.TrimSpace(fen)
+	if err != nil || fen == models.InvalidImage {
 		err = fmt.Errorf("AnalysisService-GetFenFromPicture-AnalyzePictureWithGemini: %w", err)
 		return "", err
 	}

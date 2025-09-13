@@ -57,6 +57,7 @@ const MoveFromDescriptionPrompt = `
 	Here is an ambiguous description example:
 	"move the piece in front of the king"
 	"pawn go forward"
+
 	Here is a clear description example:
 	"move the pawn in front of the king to e4"
 	"move the knight to f3"
@@ -65,7 +66,29 @@ const MoveFromDescriptionPrompt = `
 	"castle queenside"
 	"move the queen to h5"
 	"i think i will move my pawn to d5"
-	"pawn form e2 to e4 looks promising""
+	"pawn form e2 to e4 looks promising"
+	
+	input might be in indonesian, so be aware of that.
+	king = raja
+	queen = ratu, permaisuri, putri
+	bishop = gajah, pendeta, uskup
+	knight = kuda, kesatria, kavaleri
+	rook = benteng, menara, kapal
+	pawn = pion, bidak, prajurit, serdadu, tentara
+	
+	Here is an indonesian description example:
+	"pion di depan raja ke e4"
+	"pindahkan kuda ke f3"
+	"pindahkan gajah ke c4"
+	"rokade ke sisi raja"
+	"rokade ke sisi ratu"
+	"pindahkan ratu ke h5"
+	"saya rasa saya akan memindahkan pion saya ke d5"
+	"pion dari e2 ke e4 terlihat menjanjikan"
+	"gw mau majuin pion ke e4"
+	"pion gue ke e4 aja"
+	"pion di e2 ke e4"
+	"gw mau pion gw ke e4"
 `
 
 const InvalidMove = "InvalidMove"

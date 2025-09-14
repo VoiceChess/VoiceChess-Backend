@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/generative-ai-go/genai"
 	"google.golang.org/api/option"
+	"samsungvoicebe/models"
 )
 
 func PromptGemini(prompt string) string {
@@ -19,7 +20,7 @@ func PromptGemini(prompt string) string {
 	}
 	defer client.Close()
 
-	model := client.GenerativeModel("gemini-2.0-flash-exp")
+	model := client.GenerativeModel(models.GeminiModel)
 
 	resp, err := model.GenerateContent(ctx, genai.Text(prompt))
 	if err != nil {
@@ -42,7 +43,7 @@ func AnalyzePictureWithGemini(imageFile []byte, prompt string) (string, error) {
 	}
 	defer client.Close()
 
-	model := client.GenerativeModel("gemini-2.0-flash-exp")
+	model := client.GenerativeModel(models.GeminiModel)
 
 	resp, err := model.GenerateContent(ctx,
 		genai.Text(prompt),

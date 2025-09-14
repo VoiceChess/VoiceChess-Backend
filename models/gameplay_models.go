@@ -71,7 +71,7 @@ const MoveFromDescriptionPrompt = `
 	input might be in indonesian, so be aware of that.
 	king = raja
 	queen = ratu, permaisuri, putri
-	bishop = gajah, pendeta, uskup
+	bishop = gajah, pendeta, uskup, mentri, menteri
 	knight = kuda, kesatria, kavaleri
 	rook = benteng, menara, kapal
 	pawn = pion, bidak, prajurit, serdadu, tentara

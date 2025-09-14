@@ -66,6 +66,7 @@ const GetFenFromPicturePrompt = `
 	rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR x KQkq - 0 1
 
 	if the FEN you generate is invalid, respond with "InvalidImage" and nothing else.
-	
 `
 const InvalidImage = "InvalidImage"
+
+const GeminiModel = "gemini-2.5-pro"

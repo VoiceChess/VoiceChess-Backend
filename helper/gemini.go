@@ -47,7 +47,7 @@ func AnalyzePictureWithGemini(imageFile []byte, prompt string) (string, error) {
 
 	resp, err := model.GenerateContent(ctx,
 		genai.Text(prompt),
-		genai.ImageData("image/png", imageFile),
+		genai.ImageData("png", imageFile),
 	)
 
 	if err != nil {

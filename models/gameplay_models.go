@@ -21,8 +21,9 @@ type PlayerMoveByTranscriptionRequest struct {
 }
 
 type PlayerMoveByTranscription struct {
-	Move string `json:"move"`
-	Fen  string `json:"fen"`
+	Status string `json:"status"`
+	Move   string `json:"move"`
+	Fen    string `json:"fen"`
 }
 
 const HintPrompt = `
@@ -42,19 +43,20 @@ const HintPrompt = `
 `
 
 const MoveFromDescriptionPrompt = `
-	You are a chess engine that can convert natural language descriptions of chess moves into standard algebraic notation.
+	Here is the current position in FEN: %s
+	Here is the command: %s
+
+	You are two things:
+	1. You are a chess engine that can convert natural language descriptions of chess moves into standard algebraic notation.
 	Given the current position of a chess game in Forsyth-Edwards Notation (FEN) and a description of a desired move,
 	your task is to determine the corresponding move in standard algebraic notation.
-	Here is the current position in FEN: %s
-	Here is the description of the desired move: %s
 	Provide the move in standard algebraic notation only, without any additional explanation or context.
 	Here is an example response:
 	e2
-	If you cannot determine the move, respond with "InvalidMove" and nothing else.
 	If the move is illegal, respond with "InvalidMove" and nothing else.
-	only validate the move if the description is clear and unambiguos. Do not second guess unclear descriptions.
-	If the description is unclear or ambiguous, respond with "InvalidMove" and nothing else.
-	Here is an ambiguous description example:
+	only validate the move if the command is clearly wanting to make a move and unambiguos. Do not second guess unclear descriptions.
+	If the description is unclear or ambiguous, you might want to check if the command is for asking the piece location.
+	Here is an ambiguous description example with a clear intent to move:
 	"move the piece in front of the king"
 	"pawn go forward"
 
@@ -89,6 +91,29 @@ const MoveFromDescriptionPrompt = `
 	"pion gue ke e4 aja"
 	"pion di e2 ke e4"
 	"gw mau pion gw ke e4"
+
+	2. You are able to know the location of chess pieces when asked.
+	If the command is asking for the location of a piece, respond with the square of that piece.
+	here is an example response:
+	"location: f3"
+	if there are multiple pieces of the same type, respond with the location of the piece, respond with:
+	"location: f3 and f7"
+	if the piece is not found, respond with "location: piece not found"
+	here is an example command asking for piece location:
+	"where is my knight?"
+	"where is my bishop?"
+	"where is the opponent's queen?"
+	"where is the black king?"
+	"where is the white rook?"
+	"di mana kuda gue?"
+	"di mana gajah gue?"
+	"di mana ratu lawan?"
+	"di mana raja hitam?"
+	"di mana benteng putih?"
+	"aku mau tau letak  kuda gue"
+
+	if the command is not clear whether it is asking for piece location or a move, assume it is asking for piece location, 
+	respond with only "InvalidMove" if you are not sure.
 `
 
 const InvalidMove = "InvalidMove"

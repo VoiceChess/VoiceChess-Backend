@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/notnil/chess"
@@ -70,6 +71,15 @@ func (a *AnalysisService) StockfishAnalyze(fen string, botLevel string) (models.
 	}
 
 	bestMove := engine.SearchResults().BestMove
+	score := engine.SearchResults().Info.Score
+
+	if score.Mate != 0 {
+		analysisResult.Eval = score.Mate
+		analysisResult.IsMate = true
+	} else {
+		analysisResult.Eval = score.CP
+		analysisResult.IsMate = false
+	}
 
 	err = game.Move(bestMove)
 	if err != nil {
@@ -77,10 +87,8 @@ func (a *AnalysisService) StockfishAnalyze(fen string, botLevel string) (models.
 		return models.StockfishAnalysisResult{}, err
 	}
 
-	analysisResult = models.StockfishAnalysisResult{
-		BestMove: bestMove.String(),
-		Fen:      game.FEN(),
-	}
+	analysisResult.Fen = game.FEN()
+	analysisResult.BestMove = bestMove.String()
 
 	return analysisResult, nil
 }
@@ -97,27 +105,139 @@ func (a *AnalysisService) GetGameHistoryList(userID string) ([]models.Game, erro
 
 func (a *AnalysisService) GetAnalyzedMoveByOrder(moveOrder int, gameID string) (models.MoveAnalysis, error) {
 	var analyzedMove models.MoveAnalysis
+	var currMoveAnalysis models.StockfishAnalysisResult
 
-	move, err := a.analysisRepo.GetMoveByOrder(moveOrder, gameID)
+	firstMove, err := a.analysisRepo.GetMoveByOrder(1, gameID)
 	if err != nil {
 		err = fmt.Errorf("AnalysisService-GetAnalyzedMoveByOrder-GetMoveByOrder: %w", err)
 		return models.MoveAnalysis{}, err
 	}
 
-	analyzedMove = models.MoveAnalysis{
-		Move: move.Move,
-		Fen:  move.Fen,
+	currMove, err := a.analysisRepo.GetMoveByOrder(moveOrder, gameID)
+	if err != nil {
+		err = fmt.Errorf("AnalysisService-GetAnalyzedMoveByOrder-GetMoveByOrder: %w", err)
+		return models.MoveAnalysis{}, err
+	}
+
+	if moveOrder > 2 || firstMove.Move != "black" {
+		prevMoveAnalysis, err := a.getMoveAnalysis(moveOrder-1, gameID)
+		if err != nil {
+			err = fmt.Errorf("AnalysisService-GetAnalyzedMoveByOrder-getMoveAnalysis: %w", err)
+			return models.MoveAnalysis{}, err
+		}
+		currMoveAnalysis, err = a.getMoveAnalysis(moveOrder, gameID)
+		if err != nil {
+			err = fmt.Errorf("AnalysisService-GetAnalyzedMoveByOrder-getMoveAnalysis: %w", err)
+			return models.MoveAnalysis{}, err
+		}
+
+		if prevMoveAnalysis.IsMate && currMoveAnalysis.IsMate {
+			analyzedMove.MoveGrade = a.classifyMove(nil, nil, &prevMoveAnalysis.Eval, &currMoveAnalysis.Eval)
+		} else if prevMoveAnalysis.IsMate && !currMoveAnalysis.IsMate {
+			analyzedMove.MoveGrade = a.classifyMove(nil, &currMoveAnalysis.Eval, &prevMoveAnalysis.Eval, nil)
+		} else if !prevMoveAnalysis.IsMate && currMoveAnalysis.IsMate {
+			analyzedMove.MoveGrade = a.classifyMove(&prevMoveAnalysis.Eval, nil, nil, &currMoveAnalysis.Eval)
+		} else {
+			analyzedMove.MoveGrade = a.classifyMove(&prevMoveAnalysis.Eval, &currMoveAnalysis.Eval, nil, nil)
+		}
+	} else if (moveOrder == 2 && firstMove.Move == "black") || moveOrder == 1 {
+		currMoveAnalysis, err = a.getMoveAnalysis(moveOrder, gameID)
+		if err != nil {
+			err = fmt.Errorf("AnalysisService-GetAnalyzedMoveByOrder-getMoveAnalysis: %w", err)
+			return models.MoveAnalysis{}, err
+		}
+		zeroPtr := 0
+		analyzedMove.MoveGrade = a.classifyMove(&zeroPtr, &currMoveAnalysis.Eval, nil, nil)
+	}
+
+	analyzedMove.Move = currMove.Move
+	analyzedMove.Fen = currMove.Fen
+	analyzedMove.BestMove = currMoveAnalysis.BestMove
+	analyzedMove.IsEvalMate = currMoveAnalysis.IsMate
+
+	if currMoveAnalysis.IsMate {
+		analyzedMove.EvalGraph = float64(currMoveAnalysis.Eval)
+	} else {
+		analyzedMove.EvalGraph = float64(currMoveAnalysis.Eval) / 100.0
+	}
+
+	return analyzedMove, nil
+}
+
+func (a *AnalysisService) getMoveAnalysis(moveOrder int, gameID string) (models.StockfishAnalysisResult, error) {
+	move, err := a.analysisRepo.GetMoveByOrder(moveOrder, gameID)
+	if err != nil {
+		err = fmt.Errorf("AnalysisService-GetAnalyzedMoveByOrder-GetMoveByOrder: %w", err)
+		return models.StockfishAnalysisResult{}, err
 	}
 
 	stockfishResult, err := a.StockfishAnalyze(move.Fen, "hard")
 	if err != nil {
 		err = fmt.Errorf("AnalysisService-GetAnalyzedMoveByOrder-StockfishAnalyze: %w", err)
-		return models.MoveAnalysis{}, err
+		return models.StockfishAnalysisResult{}, err
 	}
 
-	analyzedMove.BestMove = stockfishResult.BestMove
+	return stockfishResult, nil
+}
 
-	return analyzedMove, nil
+func (a *AnalysisService) classifyMove(
+	evalBefore *int,
+	evalAfter *int,
+	mateBefore *int,
+	mateAfter *int,
+) string {
+	if mateBefore == nil && mateAfter == nil {
+		if evalBefore == nil || evalAfter == nil {
+			return "Unknown"
+		}
+
+		diff := *evalAfter - *evalBefore
+
+		if diff <= 0 {
+			return "Excellent"
+		}
+
+		switch {
+		case diff <= 20:
+			return "Excellent"
+		case diff <= 50:
+			return "Good"
+		case diff <= 150:
+			return "Inaccuracy"
+		case diff <= 300:
+			return "Mistake"
+		default:
+			return "Blunder"
+		}
+	}
+
+	if mateBefore != nil && mateAfter != nil {
+		if (*mateBefore > 0 && *mateAfter > 0) || (*mateBefore < 0 && *mateAfter < 0) {
+			if math.Abs(float64(*mateAfter)) <= math.Abs(float64(*mateBefore)) {
+				return "Excellent"
+			}
+			return "Inaccuracy"
+		}
+		return "Blunder"
+	}
+
+	// no longer has checkmates
+	if mateBefore != nil && mateAfter == nil {
+		if *mateBefore > 0 {
+			return "Blunder"
+		}
+		return "Excellent"
+	}
+
+	// got checkmates
+	if mateBefore == nil && mateAfter != nil {
+		if *mateAfter > 0 {
+			return "Excellent"
+		}
+		return "Blunder"
+	}
+
+	return "Unknown"
 }
 
 func (a *AnalysisService) GetFenFromPicture(imageFile []byte) (string, error) {

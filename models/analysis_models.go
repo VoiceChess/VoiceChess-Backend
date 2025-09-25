@@ -6,9 +6,12 @@ type Move struct {
 }
 
 type MoveAnalysis struct {
-	Move     string `json:"move"`
-	Fen      string `json:"fen"`
-	BestMove string `json:"best_move"`
+	Move       string  `json:"move"`
+	Fen        string  `json:"fen"`
+	BestMove   string  `json:"best_move"`
+	EvalGraph  float64 `json:"eval_graph"`
+	IsEvalMate bool    `json:"is_eval_mate"`
+	MoveGrade  string  `json:"move_grade"`
 }
 
 type Game struct {
@@ -20,6 +23,8 @@ type Game struct {
 type StockfishAnalysisResult struct {
 	Fen      string
 	BestMove string
+	Eval     int
+	IsMate   bool
 }
 
 const (

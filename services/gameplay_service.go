@@ -46,7 +46,7 @@ func (s *GameplayService) PlayerMove(gameID *string, fen, move, botLevel string)
 			return models.BotMove{}, err
 		}
 	}
-	
+
 	var botMove models.BotMove
 
 	botMove = models.BotMove{
@@ -83,6 +83,16 @@ func (s *GameplayService) PlayerMoveByVoiceTranscription(fen, transcription stri
 		return models.PlayerMoveByTranscription{}, err
 	}
 
+	if strings.Contains(move, "location") {
+		playerMove := models.PlayerMoveByTranscription{
+			Status: "Location",
+			Move:   strings.Replace(move, "location:", "", -1),
+			Fen:    fen,
+		}
+
+		return playerMove, nil
+	}
+
 	position, err := chess.FEN(fen)
 	if err != nil {
 		err = fmt.Errorf("GameplayService-PlayerMoveByVoiceTranscription-chess.FEN: %w", err)
@@ -99,8 +109,9 @@ func (s *GameplayService) PlayerMoveByVoiceTranscription(fen, transcription stri
 	playerMoveFEN := game.FEN()
 
 	playerMove := models.PlayerMoveByTranscription{
-		Move: move,
-		Fen:  playerMoveFEN,
+		Status: "Move",
+		Move:   move,
+		Fen:    playerMoveFEN,
 	}
 
 	return playerMove, nil

@@ -5,11 +5,12 @@ import (
 	"math"
 	"strings"
 
-	"github.com/notnil/chess"
-	"github.com/notnil/chess/uci"
 	"samsungvoicebe/helper"
 	"samsungvoicebe/models"
 	"samsungvoicebe/repo"
+
+	"github.com/notnil/chess"
+	"github.com/notnil/chess/uci"
 )
 
 type AnalysisService struct {

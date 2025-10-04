@@ -6,9 +6,10 @@ import (
 	"log"
 	"os"
 
+	"samsungvoicebe/models"
+
 	"github.com/google/generative-ai-go/genai"
 	"google.golang.org/api/option"
-	"samsungvoicebe/models"
 )
 
 func PromptGemini(prompt string) string {

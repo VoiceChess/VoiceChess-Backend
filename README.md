@@ -1,9 +1,14 @@
 services folder is used to store business logics
+
 controllers folder is used for http handling
+
 models folder is used to store entity definitions
+
 routes folder is used to define api routes
-config folder is used to store configuration files
+
 repo folder is used to interact with database
+
+pg_sql has the sql queries
 
 Database setup:
 Install database migration tool: https://github.com/golang-migrate/migrate/tree/master/cmd/migrate

@@ -101,7 +101,7 @@ const GetFenFromPicturePrompt = `
 `
 const InvalidImage = "InvalidImage"
 
-const GeminiModel = "gemini-2.5-pro"
+const GeminiModel = "gemini-2.0-flash"
 
 type GetGradeExplanationData struct {
 	StartFEN     string

@@ -1,9 +1,12 @@
 package services
 
 import (
+	"bytes"
 	"fmt"
+	"log"
 	"math"
 	"strings"
+	"text/template"
 
 	"github.com/notnil/chess"
 	"github.com/notnil/chess/uci"
@@ -161,6 +164,33 @@ func (a *AnalysisService) GetAnalyzedMoveByOrder(moveOrder int, gameID string) (
 		analyzedMove.EvalGraph = float64(currMoveAnalysis.Eval) / 100.0
 	}
 
+	analyzedMove.OverviewSection, err = a.GetOverviewSectionData(
+		firstMove.Fen,
+		currMove.Fen,
+		currMove.Move,
+		analyzedMove.MoveGrade,
+		analyzedMove.EvalGraph,
+		currMoveAnalysis.IsMate,
+	)
+	if err != nil {
+		return models.MoveAnalysis{}, err
+	}
+
+	analyzedMove.ThreatsSection, err = a.GetThreatsSectionData(currMove.Fen)
+	if err != nil {
+		return models.MoveAnalysis{}, err
+	}
+
+	analyzedMove.BestMoveSection, err = a.GetBestMoveSectionData(currMove.Fen, currMoveAnalysis.BestMove)
+	if err != nil {
+		return models.MoveAnalysis{}, err
+	}
+
+	analyzedMove.StrategySections, err = a.GetStrategySectionData(currMove.Fen)
+	if err != nil {
+		return models.MoveAnalysis{}, err
+	}
+
 	return analyzedMove, nil
 }
 
@@ -249,4 +279,126 @@ func (a *AnalysisService) GetFenFromPicture(imageFile []byte) (string, error) {
 	}
 
 	return fen, nil
+}
+
+func (a *AnalysisService) GetOverviewSectionData(
+	startingFEN,
+	resultingFEN,
+	playerMove,
+	moveGrade string,
+	evalGraph float64,
+	IsEvalMate bool,
+) (models.OverviewSection, error) {
+	promptData := models.GetGradeExplanationData{
+		StartFEN:     startingFEN,
+		PlayerMove:   playerMove,
+		ResultingFEN: resultingFEN,
+		EvalGraph:    evalGraph,
+		IsEvalMate:   IsEvalMate,
+		MoveGrade:    moveGrade,
+	}
+
+	prompt, err := a.buildGradeExplanationPrompt(promptData)
+	if err != nil {
+		log.Fatalf("AnalysisService-GetOverviewSectionData-buildGradeExplanationPrompt: %v", err)
+		return models.OverviewSection{}, err
+	}
+	gradeExplanation := helper.PromptGemini(prompt)
+
+	prompt = fmt.Sprintf(models.GetThreatPrompt, resultingFEN)
+	threats := helper.PromptGemini(prompt)
+
+	var colorWithAdvantage string
+	stringifiedEvalGraph := fmt.Sprintf("%.2f", evalGraph)
+	if evalGraph > 0 && !IsEvalMate {
+		colorWithAdvantage = "Advantage: Winning for White " + stringifiedEvalGraph
+	} else if evalGraph < 0 && !IsEvalMate {
+		colorWithAdvantage = "Advantage: Winning for Black " + stringifiedEvalGraph
+	} else if evalGraph > 0 && IsEvalMate {
+		colorWithAdvantage = "Advantage: Winning for White, mate in " + stringifiedEvalGraph
+	} else if evalGraph < 0 && IsEvalMate {
+		colorWithAdvantage = "Advantage: Winning for Black, mate in " + stringifiedEvalGraph
+	} else {
+		colorWithAdvantage = "No Advantage: Equal Position"
+	}
+
+	prompt = fmt.Sprintf(models.GetAdvantageExplanationPrompt, stringifiedEvalGraph, resultingFEN, colorWithAdvantage)
+	advantageExplanation := helper.PromptGemini(prompt)
+
+	prompt = fmt.Sprintf(models.GetNotableMovesPrompt, resultingFEN)
+	notableMove := helper.PromptGemini(prompt)
+
+	overviewData := models.OverviewSection{
+		GradeExplanation:     gradeExplanation,
+		Threats:              threats,
+		AdvantageExplanation: advantageExplanation,
+		NotableMoves:         notableMove,
+		ColorWithAdvantage:   colorWithAdvantage,
+	}
+
+	return overviewData, nil
+}
+
+func (a *AnalysisService) GetThreatsSectionData(FEN string) (models.ThreatsSection, error) {
+
+	FENAnalysis, err := a.StockfishAnalyze(FEN, "hard")
+	if err != nil {
+		err = fmt.Errorf("AnalysisService-GetThreatsSectionData-StockfishAnalyze: %w", err)
+		return models.ThreatsSection{}, err
+	}
+
+	threateningMove := FENAnalysis.BestMove
+
+	prompt := fmt.Sprintf(models.GetThreateningMoveExplanationPrompt, FEN, threateningMove)
+	explanation := helper.PromptGemini(prompt)
+
+	threatsData := models.ThreatsSection{
+		ThreateningMove: threateningMove,
+		Explanation:     explanation,
+	}
+
+	return threatsData, nil
+}
+
+func (a *AnalysisService) GetBestMoveSectionData(FEN, bestMove string) (models.BestMoveSection, error) {
+
+	prompt := fmt.Sprintf(models.GetBestMoveExplanationPrompt, FEN, bestMove)
+	explanation := helper.PromptGemini(prompt)
+
+	bestMoveData := models.BestMoveSection{
+		BestMove:    bestMove,
+		Explanation: explanation,
+	}
+
+	return bestMoveData, nil
+}
+
+func (a *AnalysisService) GetStrategySectionData(FEN string) (models.StrategySection, error) {
+
+	prompt := fmt.Sprintf(models.GetStrategyTitlePrompt, FEN)
+	title := helper.PromptGemini(prompt)
+
+	prompt = fmt.Sprintf(models.GetStrategyExplanationPrompt, FEN, title)
+	explanation := helper.PromptGemini(prompt)
+
+	strategyData := models.StrategySection{
+		Title:       title,
+		Explanation: explanation,
+	}
+
+	return strategyData, nil
+}
+
+func (a *AnalysisService) buildGradeExplanationPrompt(data models.GetGradeExplanationData) (string, error) {
+	tmpl, err := template.New("gradeExplanation").Parse(models.GetGradeExplanationPrompt)
+	if err != nil {
+		return "", err
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		log.Fatal(err)
+	}
+
+	return buf.String(), nil
 }

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CopilotDiffPersistence">
+    <option name="pendingDiffs">
+      <map>
+        <entry key="$PROJECT_DIR$/redis/redis.go">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/redis/redis.go" />
+              <option name="originalContent" value="package redis&#10;" />
+              <option name="updatedContent" value="package redis&#10;&#10;import (&#10;&#9;&quot;context&quot;&#10;&#9;&quot;fmt&quot;&#10;&#9;&quot;os&quot;&#10;&#9;&quot;strconv&quot;&#10;&#10;&#9;goredis &quot;github.com/redis/go-redis/v9&quot;&#10;)&#10;&#10;// New initializes and returns a Redis client. It expects the following environment variables:&#10;//   - REDIS_ADDR (required), e.g., &quot;localhost:6379&quot; or &quot;redis:6379&quot;&#10;//   - REDIS_PASSWORD (optional)&#10;//   - REDIS_DB (optional, defaults to 0)&#10;func New() (*goredis.Client, error) {&#10;&#9;addr := os.Getenv(&quot;REDIS_ADDR&quot;)&#10;&#9;if addr == &quot;&quot; {&#10;&#9;&#9;return nil, fmt.Errorf(&quot;REDIS_ADDR environment variable not set&quot;)&#10;&#9;}&#10;&#10;&#9;password := os.Getenv(&quot;REDIS_PASSWORD&quot;)&#10;&#10;&#9;dbIndex := 0&#10;&#9;if v := os.Getenv(&quot;REDIS_DB&quot;); v != &quot;&quot; {&#10;&#9;&#9;if i, err := strconv.Atoi(v); err == nil {&#10;&#9;&#9;&#9;dbIndex = i&#10;&#9;&#9;}&#10;&#9;}&#10;&#10;&#9;client := goredis.NewClient(&amp;goredis.Options{&#10;&#9;&#9;Addr:     addr,&#10;&#9;&#9;Password: password,&#10;&#9;&#9;DB:       dbIndex,&#10;&#9;})&#10;&#10;&#9;if err := client.Ping(context.Background()).Err(); err != nil {&#10;&#9;&#9;return nil, fmt.Errorf(&quot;failed to ping Redis: %w&quot;, err)&#10;&#9;}&#10;&#10;&#9;return client, nil&#10;}" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

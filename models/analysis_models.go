@@ -6,12 +6,39 @@ type Move struct {
 }
 
 type MoveAnalysis struct {
-	Move       string  `json:"move"`
-	Fen        string  `json:"fen"`
-	BestMove   string  `json:"best_move"`
-	EvalGraph  float64 `json:"eval_graph"`
-	IsEvalMate bool    `json:"is_eval_mate"`
-	MoveGrade  string  `json:"move_grade"`
+	Move             string          `json:"move"`
+	Fen              string          `json:"fen"`
+	BestMove         string          `json:"best_move"`
+	EvalGraph        float64         `json:"eval_graph"`
+	IsEvalMate       bool            `json:"is_eval_mate"`
+	MoveGrade        string          `json:"move_grade"`
+	OverviewSection  OverviewSection `json:"overview_section"`
+	ThreatsSection   ThreatsSection  `json:"threats_section"`
+	BestMoveSection  BestMoveSection `json:"best_move_section"`
+	StrategySections StrategySection `json:"strategy_section"`
+}
+
+type OverviewSection struct {
+	GradeExplanation     string `json:"grade_explanation"`
+	Threats              string `json:"threats"`
+	ColorWithAdvantage   string `json:"color_with_advantage"`
+	AdvantageExplanation string `json:"advantage_explanation"`
+	NotableMoves         string `json:"notable_moves"`
+}
+
+type ThreatsSection struct {
+	ThreateningMove string `json:"threatening_move"`
+	Explanation     string `json:"explanation"`
+}
+
+type BestMoveSection struct {
+	BestMove    string `json:"best_move"`
+	Explanation string `json:"explanation"`
+}
+
+type StrategySection struct {
+	Title       string `json:"title"`
+	Explanation string `json:"explanation"`
 }
 
 type Game struct {
@@ -75,3 +102,48 @@ const GetFenFromPicturePrompt = `
 const InvalidImage = "InvalidImage"
 
 const GeminiModel = "gemini-2.5-pro"
+
+type GetGradeExplanationData struct {
+	StartFEN     string
+	PlayerColor  string
+	PlayerMove   string
+	ResultingFEN string
+	EvalGraph    float64
+	IsEvalMate   bool
+	MoveGrade    string
+}
+
+const GetGradeExplanationPrompt = `
+	from this given FEN: {{.StartFEN}} ,
+	someone made this move: {{.PlayerMove}} and now the FEN is: {{.ResultingFEN}}.
+	the stockfish eval graph shows this score: {{.EvalGraph}}, and is mate: {{.IsEvalMate}}.
+	provide me an explanation of why this move is graded as {{.MoveGrade}} for {{.PlayerColor}}. make it short and concise text only without any format to the point and dont return the fen
+`
+
+const GetThreatPrompt = `
+	from this given FEN: %s, what are the threats for the next player? make it short and concise text only without any format to the point and dont return the fen
+`
+
+const GetAdvantageExplanationPrompt = `
+	from the eval graph score of %s and this FEN %s explain why is this the case %s make it short and concise text only without any format to the point and dont return the fen
+`
+
+const GetNotableMovesPrompt = `
+	from this given FEN: %s, what would be the notable move make it short and concise text only without any format to the point and dont return the fen
+`
+
+const GetThreateningMoveExplanationPrompt = `
+	from this given FEN: %s, explain the threatening move: %s make it short and concise text only without any format to the point and dont return the fen
+`
+
+const GetBestMoveExplanationPrompt = `
+	from this given FEN: %s, explain  why the best move is: %s . make it short and concise text only without any format to the point and dont return the fen
+`
+
+const GetStrategyTitlePrompt = `
+	from this FEN %s, provide a short title for the best strategy they can use in this position.
+`
+
+const GetStrategyExplanationPrompt = `
+	from this FEN %s and this title %s, provide a short and concise text only without any format explanation of the strategy.
+`

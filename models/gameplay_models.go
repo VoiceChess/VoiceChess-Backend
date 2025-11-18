@@ -108,7 +108,7 @@ const MoveFromDescriptionPrompt = `
 	"di mana kuda gue?"
 	"di mana gajah gue?"
 	"di mana ratu lawan?"
-	"di mana raja hitam?"
+	"di mana raja hitaoom?"
 	"di mana benteng putih?"
 	"aku mau tau letak  kuda gue"
 

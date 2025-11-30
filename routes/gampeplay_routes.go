@@ -15,5 +15,6 @@ func GameplayRoutes(router *gin.RouterGroup, cfg *config.Config, service *servic
 	router.POST("/hint", gameplayController.GetHint)
 	router.POST("/move-by-voice", gameplayController.PlayerMoveByVoiceTranscription)
 	router.POST("/game/move", gameplayController.PlayerMove)
+	router.DELETE("/game/:game_id/move", gameplayController.UndoMove)
 
 }

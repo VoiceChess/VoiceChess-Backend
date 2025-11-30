@@ -110,3 +110,16 @@ func (gc *GameplayController) PlayerMoveByVoiceTranscription(c *gin.Context) {
 		"data": playerMove,
 	})
 }
+
+func (gc *GameplayController) UndoMove(c *gin.Context) {
+	gameID := c.Param("game_id")
+
+	err := gc.Service.UndoMove(gameID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Println("GameplayController-UndoMove-UndoMove", err)
+		return
+	}
+
+	c.JSON(http.StatusNoContent, nil)
+}

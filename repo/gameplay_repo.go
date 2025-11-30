@@ -30,3 +30,11 @@ func (r *GameplayRepo) CreateGame(userID string) (string, error) {
 	}
 	return gameID, nil
 }
+
+func (r *GameplayRepo) UndoMove(gameID string) error {
+	_, err := r.db.Exec(pg_sql.DeleteLatestMove, gameID)
+	if err != nil {
+		return err
+	}
+	return nil
+}

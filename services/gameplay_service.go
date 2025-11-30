@@ -116,3 +116,12 @@ func (s *GameplayService) PlayerMoveByVoiceTranscription(fen, transcription stri
 
 	return playerMove, nil
 }
+
+func (s *GameplayService) UndoMove(gameID string) error {
+	err := s.gameplayRepo.UndoMove(gameID)
+	if err != nil {
+		err = fmt.Errorf("GameplayService-UndoMove-UndoMove: %w", err)
+		return err
+	}
+	return nil
+}

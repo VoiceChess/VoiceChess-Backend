@@ -13,8 +13,8 @@ var (
 
 func New() {
 	Rdb = redis.NewClient(&redis.Options{
-		Addr:     "redis://default:EltyWJRPuTLqwkuTLOuAehtHauvFlmGB@redis.railway.internal:6379",
-		Password: "",
+		Addr:     "redis.railway.internal:6379",
+		Password: "EltyWJRPuTLqwkuTLOuAehtHauvFlmGB",
 		DB:       0,
 	})
 }

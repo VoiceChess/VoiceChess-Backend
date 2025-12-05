@@ -117,7 +117,11 @@ const GetGradeExplanationPrompt = `
 	from this given FEN: {{.StartFEN}} ,
 	someone made this move: {{.PlayerMove}} and now the FEN is: {{.ResultingFEN}}.
 	the stockfish eval graph shows this score: {{.EvalGraph}}, and is mate: {{.IsEvalMate}}.
-	provide me an explanation of why this move is graded as {{.MoveGrade}} for {{.PlayerColor}}. make it short and concise text only without any format to the point and dont return the fen
+	provide me an explanation of why this move is graded as {{.MoveGrade}} for {{.PlayerColor}}. if the
+	starting FEN and the resulting FEN are the same, dont say the FEN is duplicate, since
+	that means the move is the first move that the player made. So just say something along the lines
+	that the game still has many possibilities to go. but don't only say that
+	make it short and concise text only without any format to the point and dont return the fen
 `
 
 const GetThreatPrompt = `
@@ -141,7 +145,7 @@ const GetBestMoveExplanationPrompt = `
 `
 
 const GetStrategyTitlePrompt = `
-	from this FEN %s, provide a short title for the best strategy they can use in this position.
+	from this FEN %s, provide a short title for the best strategy they can use in this position. make it short and concise text only without any format to the point and dont return the fen
 `
 
 const GetStrategyExplanationPrompt = `

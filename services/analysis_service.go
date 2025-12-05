@@ -123,12 +123,24 @@ func (a *AnalysisService) GetAnalyzedMoveByOrder(moveOrder int, gameID string) (
 		return models.MoveAnalysis{}, err
 	}
 
+	var prevMove models.Move
+	var prevMoveBestMove string
+
 	if moveOrder > 2 || firstMove.Move != "black" {
+		prevMove, err = a.analysisRepo.GetMoveByOrder(moveOrder-1, gameID)
+		if err != nil {
+			err = fmt.Errorf("AnalysisService-GetAnalyzedMoveByOrder-GetMoveByOrder: %w", err)
+			return models.MoveAnalysis{}, err
+		}
+
 		prevMoveAnalysis, err := a.getMoveAnalysis(moveOrder-1, gameID)
 		if err != nil {
 			err = fmt.Errorf("AnalysisService-GetAnalyzedMoveByOrder-getMoveAnalysis: %w", err)
 			return models.MoveAnalysis{}, err
 		}
+
+		prevMoveBestMove = prevMoveAnalysis.BestMove
+
 		currMoveAnalysis, err = a.getMoveAnalysis(moveOrder, gameID)
 		if err != nil {
 			err = fmt.Errorf("AnalysisService-GetAnalyzedMoveByOrder-getMoveAnalysis: %w", err)
@@ -145,6 +157,12 @@ func (a *AnalysisService) GetAnalyzedMoveByOrder(moveOrder int, gameID string) (
 			analyzedMove.MoveGrade = a.classifyMove(&prevMoveAnalysis.Eval, &currMoveAnalysis.Eval, nil, nil)
 		}
 	} else if (moveOrder == 2 && firstMove.Move == "black") || moveOrder == 1 {
+		prevMove, err = a.analysisRepo.GetMoveByOrder(moveOrder, gameID)
+		if err != nil {
+			err = fmt.Errorf("AnalysisService-GetAnalyzedMoveByOrder-GetMoveByOrder: %w", err)
+			return models.MoveAnalysis{}, err
+		}
+
 		currMoveAnalysis, err = a.getMoveAnalysis(moveOrder, gameID)
 		if err != nil {
 			err = fmt.Errorf("AnalysisService-GetAnalyzedMoveByOrder-getMoveAnalysis: %w", err)
@@ -166,7 +184,7 @@ func (a *AnalysisService) GetAnalyzedMoveByOrder(moveOrder int, gameID string) (
 	}
 
 	analyzedMove.OverviewSection, err = a.GetOverviewSectionData(
-		firstMove.Fen,
+		prevMove.Fen,
 		currMove.Fen,
 		currMove.Move,
 		analyzedMove.MoveGrade,
@@ -182,7 +200,7 @@ func (a *AnalysisService) GetAnalyzedMoveByOrder(moveOrder int, gameID string) (
 		return models.MoveAnalysis{}, err
 	}
 
-	analyzedMove.BestMoveSection, err = a.GetBestMoveSectionData(currMove.Fen, currMoveAnalysis.BestMove)
+	analyzedMove.BestMoveSection, err = a.GetBestMoveSectionData(prevMove.Fen, prevMoveBestMove)
 	if err != nil {
 		return models.MoveAnalysis{}, err
 	}

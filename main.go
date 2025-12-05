@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"samsungvoicebe/config"
 	"samsungvoicebe/db"
 	"samsungvoicebe/middleware"
+	"samsungvoicebe/redis"
 	"samsungvoicebe/repo"
 	"samsungvoicebe/routes"
 	"samsungvoicebe/services"
@@ -22,6 +24,16 @@ func main() {
 		log.Fatal("❌ GEMINI_API_KEY not configured")
 	}
 
+	// redis
+	redis.New()
+
+	pong, err := redis.Rdb.Ping(redis.Ctx).Result()
+	if err != nil {
+		panic("Failed to connect to Redis: " + err.Error())
+	}
+	fmt.Println("Redis connected:", pong)
+
+	// db
 	database, err := db.New()
 	if err != nil {
 		log.Fatal("❌ Failed to connect to database:", err)

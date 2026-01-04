@@ -10,6 +10,7 @@ import (
 
 func New() (*sql.DB, error) {
 	databaseUrl := os.Getenv("POSTGRESQL_URL")
+	//databaseUrl := "postgres://postgres:@localhost:5432/chessmate?sslmode=disable"
 	if databaseUrl == "" {
 		return nil, fmt.Errorf("POSTGRESQL_URL environment variable not set")
 	}

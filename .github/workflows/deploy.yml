@@ -17,16 +17,27 @@ jobs:
 
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          POSTGRESQL_URL: ${{ secrets.POSTGRESQL_URL }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT }}
+          envs: GEMINI_API_KEY,POSTGRESQL_URL
           script: |
             cd /root/BE-VoiceChess || cd ~/BE-VoiceChess
 
             echo "📥 Pulling latest changes..."
             git pull origin main
+
+            echo "📝 Creating .env.docker..."
+            cat > .env.docker << EOF
+            GEMINI_API_KEY=${GEMINI_API_KEY}
+            PORT=8080
+            POSTGRESQL_URL=${POSTGRESQL_URL}
+            EOF
 
             echo "🛑 Stopping containers..."
             docker-compose down

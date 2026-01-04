@@ -24,11 +24,7 @@ services:
     image: redis:7-alpine
     container_name: voicechess-redis
     restart: unless-stopped
-    environment:
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-Iyan0512!}
     command: redis-server --requirepass ${REDIS_PASSWORD:-Iyan0512!}
-    env_file:
-      - .env.docker
     networks:
       - voicechess-network
     volumes:
@@ -40,6 +36,8 @@ services:
       dockerfile: Dockerfile
     container_name: voicechess-backend
     restart: unless-stopped
+    ports:
+      - "8080:8080"
     env_file:
       - .env.docker
     depends_on:

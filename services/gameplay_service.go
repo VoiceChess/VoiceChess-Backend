@@ -68,18 +68,24 @@ func (s *GameplayService) CreateGame(userID string) (string, error) {
 
 func (s *GameplayService) GetHint(fen string) (string, error) {
 	prompt := fmt.Sprintf(models.HintPrompt, fen)
-	hint := helper.PromptGemini(prompt)
+	hint, err := helper.PromptAzureOpenAI(prompt)
+	if err != nil {
+		return "", fmt.Errorf("GameplayService-GetHint-PromptAzureOpenAI: %w", err)
+	}
 
 	return hint, nil
 }
 
 func (s *GameplayService) PlayerMoveByVoiceTranscription(fen, transcription string) (models.PlayerMoveByTranscription, error) {
 	prompt := fmt.Sprintf(models.MoveFromDescriptionPrompt, fen, transcription)
-	move := helper.PromptGemini(prompt)
+	move, err := helper.PromptAzureOpenAI(prompt)
+	if err != nil {
+		return models.PlayerMoveByTranscription{}, fmt.Errorf("GameplayService-PlayerMoveByVoiceTranscription-PromptAzureOpenAI: %w", err)
+	}
 	move = strings.TrimSpace(move)
 
 	if move == models.InvalidMove {
-		err := fmt.Errorf("GameplayService-PlayerMoveByVoiceTranscription-PromptGemini: invalid move from transcription")
+		err := fmt.Errorf("GameplayService-PlayerMoveByVoiceTranscription-PromptAzureOpenAI: invalid move from transcription")
 		return models.PlayerMoveByTranscription{}, err
 	}
 

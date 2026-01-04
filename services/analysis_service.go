@@ -290,10 +290,10 @@ func (a *AnalysisService) classifyMove(
 }
 
 func (a *AnalysisService) GetFenFromPicture(imageFile []byte) (string, error) {
-	fen, err := helper.AnalyzePictureWithGemini(imageFile, models.GetFenFromPicturePrompt)
+	fen, err := helper.AnalyzePictureWithAzureOpenAI(imageFile, models.GetFenFromPicturePrompt)
 	fen = strings.TrimSpace(fen)
 	if err != nil || fen == models.InvalidImage {
-		err = fmt.Errorf("AnalysisService-GetFenFromPicture-AnalyzePictureWithGemini: %w", err)
+		err = fmt.Errorf("AnalysisService-GetFenFromPicture-AnalyzePictureWithAzureOpenAI: %w", err)
 		return "", err
 	}
 
@@ -322,10 +322,16 @@ func (a *AnalysisService) GetOverviewSectionData(
 		log.Fatalf("AnalysisService-GetOverviewSectionData-buildGradeExplanationPrompt: %v", err)
 		return models.OverviewSection{}, err
 	}
-	gradeExplanation := helper.PromptGemini(prompt)
+	gradeExplanation, err := helper.PromptAzureOpenAI(prompt)
+	if err != nil {
+		return models.OverviewSection{}, fmt.Errorf("AnalysisService-GetOverviewSectionData-PromptAzureOpenAI: %w", err)
+	}
 
 	prompt = fmt.Sprintf(models.GetThreatPrompt, resultingFEN)
-	threats := helper.PromptGemini(prompt)
+	threats, err := helper.PromptAzureOpenAI(prompt)
+	if err != nil {
+		return models.OverviewSection{}, fmt.Errorf("AnalysisService-GetOverviewSectionData-PromptAzureOpenAI: %w", err)
+	}
 
 	var colorWithAdvantage string
 	stringifiedEvalGraph := fmt.Sprintf("%.2f", evalGraph)
@@ -342,10 +348,16 @@ func (a *AnalysisService) GetOverviewSectionData(
 	}
 
 	prompt = fmt.Sprintf(models.GetAdvantageExplanationPrompt, stringifiedEvalGraph, resultingFEN, colorWithAdvantage)
-	advantageExplanation := helper.PromptGemini(prompt)
+	advantageExplanation, err := helper.PromptAzureOpenAI(prompt)
+	if err != nil {
+		return models.OverviewSection{}, fmt.Errorf("AnalysisService-GetOverviewSectionData-PromptAzureOpenAI: %w", err)
+	}
 
 	prompt = fmt.Sprintf(models.GetNotableMovesPrompt, resultingFEN)
-	notableMove := helper.PromptGemini(prompt)
+	notableMove, err := helper.PromptAzureOpenAI(prompt)
+	if err != nil {
+		return models.OverviewSection{}, fmt.Errorf("AnalysisService-GetOverviewSectionData-PromptAzureOpenAI: %w", err)
+	}
 
 	overviewData := models.OverviewSection{
 		GradeExplanation:     gradeExplanation,
@@ -369,7 +381,10 @@ func (a *AnalysisService) GetThreatsSectionData(FEN string) (models.ThreatsSecti
 	threateningMove := FENAnalysis.BestMove
 
 	prompt := fmt.Sprintf(models.GetThreateningMoveExplanationPrompt, FEN, threateningMove)
-	explanation := helper.PromptGemini(prompt)
+	explanation, err := helper.PromptAzureOpenAI(prompt)
+	if err != nil {
+		return models.ThreatsSection{}, fmt.Errorf("AnalysisService-GetThreatsSectionData-PromptAzureOpenAI: %w", err)
+	}
 
 	threatsData := models.ThreatsSection{
 		ThreateningMove: threateningMove,
@@ -382,7 +397,10 @@ func (a *AnalysisService) GetThreatsSectionData(FEN string) (models.ThreatsSecti
 func (a *AnalysisService) GetBestMoveSectionData(FEN, bestMove string) (models.BestMoveSection, error) {
 
 	prompt := fmt.Sprintf(models.GetBestMoveExplanationPrompt, FEN, bestMove)
-	explanation := helper.PromptGemini(prompt)
+	explanation, err := helper.PromptAzureOpenAI(prompt)
+	if err != nil {
+		return models.BestMoveSection{}, fmt.Errorf("AnalysisService-GetBestMoveSectionData-PromptAzureOpenAI: %w", err)
+	}
 
 	bestMoveData := models.BestMoveSection{
 		BestMove:    bestMove,
@@ -395,10 +413,16 @@ func (a *AnalysisService) GetBestMoveSectionData(FEN, bestMove string) (models.B
 func (a *AnalysisService) GetStrategySectionData(FEN string) (models.StrategySection, error) {
 
 	prompt := fmt.Sprintf(models.GetStrategyTitlePrompt, FEN)
-	title := helper.PromptGemini(prompt)
+	title, err := helper.PromptAzureOpenAI(prompt)
+	if err != nil {
+		return models.StrategySection{}, fmt.Errorf("AnalysisService-GetStrategySectionData-PromptAzureOpenAI: %w", err)
+	}
 
 	prompt = fmt.Sprintf(models.GetStrategyExplanationPrompt, FEN, title)
-	explanation := helper.PromptGemini(prompt)
+	explanation, err := helper.PromptAzureOpenAI(prompt)
+	if err != nil {
+		return models.StrategySection{}, fmt.Errorf("AnalysisService-GetStrategySectionData-PromptAzureOpenAI: %w", err)
+	}
 
 	strategyData := models.StrategySection{
 		Title:       title,

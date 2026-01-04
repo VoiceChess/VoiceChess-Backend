@@ -61,7 +61,7 @@ func main() {
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "VoiceChess Backend API",
-			"version": "1.0.0",
+			"version": "1.0.1",
 			"status":  "running",
 		})
 	})

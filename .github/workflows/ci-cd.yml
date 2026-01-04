@@ -30,7 +30,10 @@ jobs:
         run: go test -v ./...
 
       - name: Build Docker image
-        run: docker build -t voicechess-backend:test .
+        run: |
+          echo "Building Docker image..."
+          docker build -t voicechess-backend:test .
+          echo "✅ Docker build successful!"
 
   deploy:
     name: Deploy to VPS
@@ -47,12 +50,15 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           POSTGRESQL_URL: ${{ secrets.POSTGRESQL_URL }}
+          PORT: ${{ secrets.PORT }}
+          AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+          AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT }}
-          envs: GEMINI_API_KEY,POSTGRESQL_URL
+          envs: GEMINI_API_KEY,POSTGRESQL_URL,PORT,AZURE_OPENAI_ENDPOINT,AZURE_OPENAI_API_KEY
           script: |
             cd /root/BE-VoiceChess || cd ~/BE-VoiceChess
 
@@ -62,8 +68,10 @@ jobs:
             echo "📝 Creating .env.docker..."
             cat > .env.docker << EOF
             GEMINI_API_KEY=${GEMINI_API_KEY}
-            PORT=8080
+            PORT=${PORT}
             POSTGRESQL_URL=${POSTGRESQL_URL}
+            AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
+            AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
             EOF
 
             echo "🛑 Stopping containers..."

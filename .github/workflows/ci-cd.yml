@@ -46,18 +46,19 @@ jobs:
 
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.0.3
-        env: 
+        env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           POSTGRESQL_URL: ${{ secrets.POSTGRESQL_URL }}
           PORT: ${{ secrets.PORT }}
           AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
           AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT }}
-          envs: GEMINI_API_KEY,POSTGRESQL_URL,PORT,AZURE_OPENAI_ENDPOINT,AZURE_OPENAI_API_KEY
+          envs: GEMINI_API_KEY,POSTGRESQL_URL,PORT,AZURE_OPENAI_ENDPOINT,AZURE_OPENAI_API_KEY,REDIS_PASSWORD
           script: |
             cd /root/BE-VoiceChess || cd ~/BE-VoiceChess
 
@@ -71,6 +72,8 @@ jobs:
             POSTGRESQL_URL=${POSTGRESQL_URL}
             AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
             AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
+            REDIS_ADDR=redis:6379
+            REDIS_PASSWORD=${REDIS_PASSWORD}
             EOF
 
             echo "🛑 Stopping containers..."

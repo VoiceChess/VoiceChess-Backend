@@ -27,7 +27,7 @@ func (s *GameplayService) PlayerMove(gameID *string, fen, move, botLevel string)
 		err := s.gameplayRepo.GameMove(*gameID, fen, move)
 		if err != nil {
 			err = fmt.Errorf("GameplayService-PlayerMove-GameMove: %w", err)
-			fmt.Printf("gameID: %s, fen: %s, move: %s", gameID, fen, move)
+			fmt.Printf("gameID: %s, fen: %s, move: %s", *gameID, fen, move)
 			return models.BotMove{}, err
 		}
 	}
@@ -42,7 +42,7 @@ func (s *GameplayService) PlayerMove(gameID *string, fen, move, botLevel string)
 		err = s.gameplayRepo.GameMove(*gameID, analysisResult.Fen, analysisResult.BestMove)
 		if err != nil {
 			err = fmt.Errorf("GameplayService-PlayerMove-GameMove: %w", err)
-			fmt.Printf("gameID: %s, fen: %s, move: %s", gameID, fen, move)
+			fmt.Printf("gameID: %s, fen: %s, move: %s", *gameID, fen, move)
 			return models.BotMove{}, err
 		}
 	}

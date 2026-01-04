@@ -1,15 +1,42 @@
-name: Deploy to VPS
+name: CI/CD Pipeline
 
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
-  deploy:
-    name: Deploy to Production
+  build-and-test:
+    name: Build and Test
     runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run tests
+        run: go test -v ./...
+
+      - name: Build Docker image
+        run: docker build -t voicechess-backend:test .
+
+  deploy:
+    name: Deploy to VPS
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout code
@@ -40,16 +67,16 @@ jobs:
             EOF
 
             echo "🛑 Stopping containers..."
-            docker-compose down
+            docker-compose down || docker compose down
 
             echo "🏗️  Building new image..."
-            docker-compose build --no-cache
+            docker-compose build --no-cache || docker compose build --no-cache
 
             echo "🚀 Starting containers..."
-            docker-compose up -d
+            docker-compose up -d || docker compose up -d
 
             echo "🧹 Cleaning up old images..."
             docker image prune -f
 
             echo "✅ Deployment completed!"
-            docker-compose ps
+            docker-compose ps || docker compose ps

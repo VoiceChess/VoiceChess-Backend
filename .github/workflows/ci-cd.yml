@@ -46,7 +46,7 @@ jobs:
 
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.0.3
-        env:
+        env: 
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           POSTGRESQL_URL: ${{ secrets.POSTGRESQL_URL }}
           PORT: ${{ secrets.PORT }}

@@ -154,19 +154,29 @@ func (s *GameplayService) PlayerMoveByVoiceTranscription(fen, transcription stri
 func coordinateMoveFromText(transcription string) (string, bool) {
 	text := strings.ToLower(transcription)
 	replacements := map[string]string{
+		"ah": "a", "ha": "h",
+		"be": "b", "bi": "b",
+		"ce": "c", "si": "c", "see": "c",
+		"de": "d", "di": "d", "the": "d",
+		"eh": "e", "i": "e",
+		"ef": "f",
+		"ge": "g", "ji": "g",
 		"one": "1", "satu": "1",
 		"two": "2", "dua": "2",
 		"three": "3", "tiga": "3",
 		"four": "4", "empat": "4",
-		"five": "5", "lima": "5",
+		"five": "5", "lima": "5", "rima": "5", "delima": "5", "de lima": "5",
 		"six": "6", "enam": "6",
 		"seven": "7", "tujuh": "7",
 		"eight": "8", "delapan": "8",
+		"kadeh": "ke d", "kade": "ke d", "ke de": "ke d",
 	}
 	for from, to := range replacements {
 		text = regexp.MustCompile(`\b`+from+`\b`).ReplaceAllString(text, to)
 	}
 	text = regexp.MustCompile(`\b([a-h])\s+([1-8])\b`).ReplaceAllString(text, `$1$2`)
+	text = regexp.MustCompile(`\b([a-h])([1-8])\s+(?:to|tu|ke|menuju|pindah ke)\s+([a-h])\s*([1-8])\b`).ReplaceAllString(text, `$1$2 ke $3$4`)
+	text = regexp.MustCompile(`\b([a-h])\s*([1-8])\s+([a-h])\s*([1-8])\b`).ReplaceAllString(text, `$1$2 ke $3$4`)
 	match := regexp.MustCompile(`\b([a-h][1-8])\b\s*(?:to|tu|ke|menuju|pindah ke)\s*\b([a-h][1-8])\b`).FindStringSubmatch(text)
 	if len(match) != 3 {
 		return "", false

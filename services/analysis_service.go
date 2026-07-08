@@ -289,10 +289,10 @@ func (a *AnalysisService) classifyMove(
 }
 
 func (a *AnalysisService) GetFenFromPicture(imageFile []byte) (string, error) {
-	fen, err := helper.AnalyzePictureWithGemini(imageFile, models.GetFenFromPicturePrompt)
+	fen, err := helper.DetectFenFromPicture(imageFile)
 	fen = strings.TrimSpace(fen)
 	if err != nil || fen == models.InvalidImage {
-		err = fmt.Errorf("AnalysisService-GetFenFromPicture-AnalyzePictureWithGemini: %w", err)
+		err = fmt.Errorf("AnalysisService-GetFenFromPicture-DetectFenFromPicture: %w", err)
 		return "", err
 	}
 

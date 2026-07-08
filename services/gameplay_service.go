@@ -153,37 +153,51 @@ func (s *GameplayService) PlayerMoveByVoiceTranscription(fen, transcription stri
 
 func coordinateMoveFromText(transcription string) (string, bool) {
 	text := strings.ToLower(transcription)
-	replacements := map[string]string{
-		"ah": "a", "ha": "h",
-		"be": "b", "bi": "b",
-		"ce": "c", "si": "c", "see": "c",
-		"de": "d", "di": "d", "the": "d",
-		"eh": "e", "i": "e",
-		"ef": "f",
-		"ge": "g", "ji": "g",
-		"one": "1", "satu": "1",
-		"two": "2", "dua": "2",
-		"three": "3", "tiga": "3",
-		"four": "4", "empat": "4",
-		"five": "5", "lima": "5", "rima": "5", "delima": "5", "de lima": "5",
-		"six": "6", "enam": "6",
-		"seven": "7", "tujuh": "7",
-		"eight": "8", "delapan": "8",
-		"kadeh": "ke d", "kade": "ke d", "ke de": "ke d",
-	}
-	for from, to := range replacements {
-		text = regexp.MustCompile(`\b`+from+`\b`).ReplaceAllString(text, to)
-	}
+	text = regexp.MustCompile(`\b(kadeh|kade|ke de|ke d)\b`).ReplaceAllString(text, "ke d")
 	text = regexp.MustCompile(`\bke\s+b\s+e\s*([1-8])\b`).ReplaceAllString(text, `ke d$1`)
 	text = regexp.MustCompile(`\bke\s+b\s+e([1-8])\b`).ReplaceAllString(text, `ke d$1`)
-	text = regexp.MustCompile(`\b([a-h])\s+([1-8])\b`).ReplaceAllString(text, `$1$2`)
-	text = regexp.MustCompile(`\b([a-h])([1-8])\s+(?:2|,|go|to|tu|ke|menuju|pindah ke)\s+([a-h])\s*([1-8])\b`).ReplaceAllString(text, `$1$2 ke $3$4`)
-	text = regexp.MustCompile(`\b([a-h])\s*([1-8])\s*,?\s+([a-h])\s*([1-8])\b`).ReplaceAllString(text, `$1$2 ke $3$4`)
-	match := regexp.MustCompile(`\b([a-h][1-8])\b\s*(?:2|,|go|to|tu|ke|menuju|pindah ke)\s*\b([a-h][1-8])\b`).FindStringSubmatch(text)
-	if len(match) != 3 {
+	text = strings.ReplaceAll(text, ",", " , ")
+	text = regexp.MustCompile(`[^a-z0-9,]+`).ReplaceAllString(text, " ")
+
+	tokenMap := map[string]string{
+		"ah": "a", "bee": "b", "be": "b", "bi": "b",
+		"cee": "c", "sea": "c", "see": "c", "ce": "c", "si": "c",
+		"dee": "d", "de": "d", "di": "d", "the": "d",
+		"ee": "e", "eh": "e", "ef": "f", "eff": "f",
+		"ge": "g", "gee": "g", "ji": "g", "ha": "h", "aitch": "h",
+		"one": "1", "satu": "1", "two": "2", "dua": "2",
+		"three": "3", "tiga": "3", "four": "4", "empat": "4",
+		"five": "5", "lima": "5", "rima": "5", "delima": "5",
+		"six": "6", "enam": "6", "seven": "7", "tujuh": "7",
+		"eight": "8", "delapan": "8",
+	}
+
+	tokens := strings.Fields(text)
+	squares := make([]string, 0, 2)
+	for index := 0; index < len(tokens); index++ {
+		token := tokens[index]
+		if mapped, ok := tokenMap[token]; ok {
+			token = mapped
+		}
+		if regexp.MustCompile(`^[a-h][1-8]$`).MatchString(token) {
+			squares = append(squares, token)
+			continue
+		}
+		if regexp.MustCompile(`^[a-h]$`).MatchString(token) && index+1 < len(tokens) {
+			next := tokens[index+1]
+			if mapped, ok := tokenMap[next]; ok {
+				next = mapped
+			}
+			if regexp.MustCompile(`^[1-8]$`).MatchString(next) {
+				squares = append(squares, token+next)
+				index++
+			}
+		}
+	}
+	if len(squares) < 2 {
 		return "", false
 	}
-	return match[1] + match[2], true
+	return squares[0] + squares[1], true
 }
 
 func applyVoiceMove(fen, move string) (models.PlayerMoveByTranscription, error) {

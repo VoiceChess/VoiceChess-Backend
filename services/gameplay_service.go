@@ -177,9 +177,9 @@ func coordinateMoveFromText(transcription string) (string, bool) {
 	text = regexp.MustCompile(`\bke\s+b\s+e\s*([1-8])\b`).ReplaceAllString(text, `ke d$1`)
 	text = regexp.MustCompile(`\bke\s+b\s+e([1-8])\b`).ReplaceAllString(text, `ke d$1`)
 	text = regexp.MustCompile(`\b([a-h])\s+([1-8])\b`).ReplaceAllString(text, `$1$2`)
-	text = regexp.MustCompile(`\b([a-h])([1-8])\s+(?:2|to|tu|ke|menuju|pindah ke)\s+([a-h])\s*([1-8])\b`).ReplaceAllString(text, `$1$2 ke $3$4`)
-	text = regexp.MustCompile(`\b([a-h])\s*([1-8])\s+([a-h])\s*([1-8])\b`).ReplaceAllString(text, `$1$2 ke $3$4`)
-	match := regexp.MustCompile(`\b([a-h][1-8])\b\s*(?:2|to|tu|ke|menuju|pindah ke)\s*\b([a-h][1-8])\b`).FindStringSubmatch(text)
+	text = regexp.MustCompile(`\b([a-h])([1-8])\s+(?:2|,|go|to|tu|ke|menuju|pindah ke)\s+([a-h])\s*([1-8])\b`).ReplaceAllString(text, `$1$2 ke $3$4`)
+	text = regexp.MustCompile(`\b([a-h])\s*([1-8])\s*,?\s+([a-h])\s*([1-8])\b`).ReplaceAllString(text, `$1$2 ke $3$4`)
+	match := regexp.MustCompile(`\b([a-h][1-8])\b\s*(?:2|,|go|to|tu|ke|menuju|pindah ke)\s*\b([a-h][1-8])\b`).FindStringSubmatch(text)
 	if len(match) != 3 {
 		return "", false
 	}
@@ -198,10 +198,28 @@ func applyVoiceMove(fen, move string) (models.PlayerMoveByTranscription, error) 
 	}
 
 	game := chess.NewGame(position)
-	if err := game.MoveStr(move); err != nil {
+	if regexp.MustCompile(`^[a-h][1-8][a-h][1-8][qrbn]?$`).MatchString(strings.ToLower(move)) {
+		uciMove, err := chess.UCINotation{}.Decode(game.Position(), strings.ToLower(move))
+		if err != nil {
+			logGameplayEvent("voice_move_apply_failed", map[string]any{
+				"move":  move,
+				"stage": "uci_decode",
+				"error": err.Error(),
+			})
+			return models.PlayerMoveByTranscription{}, fmt.Errorf("GameplayService-PlayerMoveByVoiceTranscription-game.Move: %w", err)
+		}
+		if err := game.Move(uciMove); err != nil {
+			logGameplayEvent("voice_move_apply_failed", map[string]any{
+				"move":  move,
+				"stage": "move",
+				"error": err.Error(),
+			})
+			return models.PlayerMoveByTranscription{}, fmt.Errorf("GameplayService-PlayerMoveByVoiceTranscription-game.Move: %w", err)
+		}
+	} else if err := game.MoveStr(move); err != nil {
 		logGameplayEvent("voice_move_apply_failed", map[string]any{
 			"move":  move,
-			"stage": "move",
+			"stage": "move_str",
 			"error": err.Error(),
 		})
 		return models.PlayerMoveByTranscription{}, fmt.Errorf("GameplayService-PlayerMoveByVoiceTranscription-game.Move: %w", err)

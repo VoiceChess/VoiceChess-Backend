@@ -3,6 +3,7 @@ package controllers
 import (
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"samsungvoicebe/config"
@@ -117,7 +118,11 @@ func (gc *GameplayController) PlayerMoveByVoiceTranscription(c *gin.Context) {
 
 	playerMove, err := gc.Service.PlayerMoveByVoiceTranscription(req.Fen, req.Transcription)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		status := http.StatusBadRequest
+		if strings.Contains(err.Error(), "PromptOllama") {
+			status = http.StatusServiceUnavailable
+		}
+		c.JSON(status, gin.H{"error": "Could not understand the move"})
 		log.Println("GameplayController-PlayerMoveByVoiceTranscription-PlayerMoveByVoiceTranscription", err)
 		return
 	}

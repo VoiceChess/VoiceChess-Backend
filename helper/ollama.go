@@ -26,9 +26,11 @@ type ollamaResponse struct {
 	Error   string        `json:"error,omitempty"`
 }
 
-// PromptOllama sends a single-prompt chat request to the Ollama gateway and
-// returns the model's text reply. Drop-in replacement for PromptAzureOpenAI.
 func PromptOllama(prompt string) (string, error) {
+	return PromptOllamaWithTimeout(prompt, 8*time.Second)
+}
+
+func PromptOllamaWithTimeout(prompt string, timeout time.Duration) (string, error) {
 	url := os.Getenv("OLLAMA_API_URL")
 	model := os.Getenv("OLLAMA_MODEL_NAME")
 	if url == "" {
@@ -58,8 +60,7 @@ func PromptOllama(prompt string) (string, error) {
 		req.Header.Set("Authorization", "Bearer "+key)
 	}
 
-	// ponytail: 30s covers CPU inference on qwen2.5:3b; raise if you host a bigger model
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := &http.Client{Timeout: timeout}
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("failed to call Ollama API: %w", err)

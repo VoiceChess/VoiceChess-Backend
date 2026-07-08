@@ -1,60 +1,47 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Create users table
-CREATE TABLE IF NOT EXISTS users (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    username VARCHAR(255) NOT NULL UNIQUE,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE IF NOT EXISTS public.users (
+    id TEXT PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create games table
-CREATE TABLE IF NOT EXISTS games (
+CREATE TABLE IF NOT EXISTS public.games (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL,
-    status VARCHAR(50) NOT NULL DEFAULT 'in_progress',
-    result VARCHAR(50),
-    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    ended_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    user_id TEXT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create moves table
-CREATE TABLE IF NOT EXISTS moves (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    game_id UUID NOT NULL,
-    move_notation VARCHAR(10) NOT NULL,
-    move_order INT NOT NULL,
-    fen VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE
+CREATE TABLE IF NOT EXISTS public.moves (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    game_id UUID NOT NULL REFERENCES public.games(id) ON DELETE CASCADE,
+    move_order INT,
+    move VARCHAR(10) NOT NULL,
+    fen VARCHAR(500) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create trigger for move_order
-CREATE OR REPLACE FUNCTION set_move_order()
+CREATE OR REPLACE FUNCTION public.set_move_order()
 RETURNS TRIGGER AS $$
 BEGIN
     IF NEW.move_order IS NULL THEN
         SELECT COALESCE(MAX(move_order), 0) + 1
         INTO NEW.move_order
-        FROM moves
+        FROM public.moves
         WHERE game_id = NEW.game_id;
     END IF;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER before_insert_move
-BEFORE INSERT ON moves
-FOR EACH ROW
-EXECUTE FUNCTION set_move_order();
+DROP TRIGGER IF EXISTS moves_set_order ON public.moves;
+CREATE TRIGGER moves_set_order
+    BEFORE INSERT ON public.moves
+    FOR EACH ROW
+    EXECUTE FUNCTION public.set_move_order();
 
--- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_games_user_id ON games(user_id);
-CREATE INDEX IF NOT EXISTS idx_games_status ON games(status);
-CREATE INDEX IF NOT EXISTS idx_moves_game_id ON moves(game_id);
-CREATE INDEX IF NOT EXISTS idx_moves_move_order ON moves(game_id, move_order);
+CREATE INDEX IF NOT EXISTS idx_games_user_id ON public.games(user_id);
+CREATE INDEX IF NOT EXISTS idx_moves_game_id ON public.moves(game_id);
+CREATE INDEX IF NOT EXISTS idx_moves_move_order ON public.moves(game_id, move_order);

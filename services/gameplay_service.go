@@ -174,10 +174,12 @@ func coordinateMoveFromText(transcription string) (string, bool) {
 	for from, to := range replacements {
 		text = regexp.MustCompile(`\b`+from+`\b`).ReplaceAllString(text, to)
 	}
+	text = regexp.MustCompile(`\bke\s+b\s+e\s*([1-8])\b`).ReplaceAllString(text, `ke d$1`)
+	text = regexp.MustCompile(`\bke\s+b\s+e([1-8])\b`).ReplaceAllString(text, `ke d$1`)
 	text = regexp.MustCompile(`\b([a-h])\s+([1-8])\b`).ReplaceAllString(text, `$1$2`)
-	text = regexp.MustCompile(`\b([a-h])([1-8])\s+(?:to|tu|ke|menuju|pindah ke)\s+([a-h])\s*([1-8])\b`).ReplaceAllString(text, `$1$2 ke $3$4`)
+	text = regexp.MustCompile(`\b([a-h])([1-8])\s+(?:2|to|tu|ke|menuju|pindah ke)\s+([a-h])\s*([1-8])\b`).ReplaceAllString(text, `$1$2 ke $3$4`)
 	text = regexp.MustCompile(`\b([a-h])\s*([1-8])\s+([a-h])\s*([1-8])\b`).ReplaceAllString(text, `$1$2 ke $3$4`)
-	match := regexp.MustCompile(`\b([a-h][1-8])\b\s*(?:to|tu|ke|menuju|pindah ke)\s*\b([a-h][1-8])\b`).FindStringSubmatch(text)
+	match := regexp.MustCompile(`\b([a-h][1-8])\b\s*(?:2|to|tu|ke|menuju|pindah ke)\s*\b([a-h][1-8])\b`).FindStringSubmatch(text)
 	if len(match) != 3 {
 		return "", false
 	}

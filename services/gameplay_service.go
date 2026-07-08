@@ -1,7 +1,9 @@
 package services
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"regexp"
 	"strings"
 	"time"
@@ -22,6 +24,16 @@ func NewGameplayService(gameplayRepo *repo.GameplayRepo, analysisService *Analys
 		gameplayRepo:    gameplayRepo,
 		analysisService: analysisService,
 	}
+}
+
+func logGameplayEvent(event string, fields map[string]any) {
+	fields["event"] = event
+	payload, err := json.Marshal(fields)
+	if err != nil {
+		log.Printf("gameplay_event_marshal_failed: %v", err)
+		return
+	}
+	log.Println(string(payload))
 }
 
 func (s *GameplayService) GameBelongsToUser(gameID, userID string) (bool, error) {
@@ -87,16 +99,39 @@ func (s *GameplayService) GetHint(fen string) (string, error) {
 }
 
 func (s *GameplayService) PlayerMoveByVoiceTranscription(fen, transcription string) (models.PlayerMoveByTranscription, error) {
+	logGameplayEvent("voice_move_received", map[string]any{
+		"transcription": transcription,
+		"text_length":   len(transcription),
+	})
+
 	if move, ok := coordinateMoveFromText(transcription); ok {
+		logGameplayEvent("voice_move_parser_matched", map[string]any{
+			"strategy": "coordinate",
+			"move":     move,
+		})
 		return applyVoiceMove(fen, move)
 	}
 
+	logGameplayEvent("voice_move_parser_missed", map[string]any{
+		"strategy":      "coordinate",
+		"fallback":      "ollama",
+		"transcription": transcription,
+	})
 	prompt := fmt.Sprintf(models.MoveFromDescriptionPrompt, fen, transcription)
+	logGameplayEvent("voice_move_ollama_started", map[string]any{
+		"timeout_ms": 5000,
+	})
 	move, err := helper.PromptOllamaWithTimeout(prompt, 5*time.Second)
 	if err != nil {
+		logGameplayEvent("voice_move_ollama_failed", map[string]any{
+			"error": err.Error(),
+		})
 		return models.PlayerMoveByTranscription{}, fmt.Errorf("GameplayService-PlayerMoveByVoiceTranscription-PromptOllama: %w", err)
 	}
 	move = strings.TrimSpace(move)
+	logGameplayEvent("voice_move_ollama_completed", map[string]any{
+		"move": move,
+	})
 
 	if move == models.InvalidMove {
 		err := fmt.Errorf("GameplayService-PlayerMoveByVoiceTranscription-PromptAzureOpenAI: invalid move from transcription")
@@ -142,14 +177,27 @@ func coordinateMoveFromText(transcription string) (string, bool) {
 func applyVoiceMove(fen, move string) (models.PlayerMoveByTranscription, error) {
 	position, err := chess.FEN(fen)
 	if err != nil {
+		logGameplayEvent("voice_move_apply_failed", map[string]any{
+			"move":  move,
+			"stage": "fen",
+			"error": err.Error(),
+		})
 		return models.PlayerMoveByTranscription{}, fmt.Errorf("GameplayService-PlayerMoveByVoiceTranscription-chess.FEN: %w", err)
 	}
 
 	game := chess.NewGame(position)
 	if err := game.MoveStr(move); err != nil {
+		logGameplayEvent("voice_move_apply_failed", map[string]any{
+			"move":  move,
+			"stage": "move",
+			"error": err.Error(),
+		})
 		return models.PlayerMoveByTranscription{}, fmt.Errorf("GameplayService-PlayerMoveByVoiceTranscription-game.Move: %w", err)
 	}
 
+	logGameplayEvent("voice_move_apply_completed", map[string]any{
+		"move": move,
+	})
 	return models.PlayerMoveByTranscription{
 		Status: "Move",
 		Move:   move,

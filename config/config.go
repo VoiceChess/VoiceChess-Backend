@@ -9,6 +9,8 @@ import (
 
 type Config struct {
 	GeminiAPIKey string
+	OllamaAPIURL string
+	OllamaModel  string
 	Port         string
 	GinMode      string
 	PostgresURL  string
@@ -21,9 +23,11 @@ func LoadConfig() *Config {
 
 	config := &Config{
 		GeminiAPIKey: os.Getenv("GEMINI_API_KEY"),
+		OllamaAPIURL: os.Getenv("OLLAMA_API_URL"),
+		OllamaModel:  getEnvOrDefault("OLLAMA_MODEL_NAME", "qwen2.5:3b"),
 		Port:         getEnvOrDefault("PORT", "8080"),
 		GinMode:      getEnvOrDefault("GIN_MODE", "release"),
-		PostgresURL:  os.Getenv("POSTGRES_URL"),
+		PostgresURL:  os.Getenv("POSTGRESQL_URL"),
 	}
 
 	return config

@@ -3,7 +3,6 @@ package helper
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 
 	"samsungvoicebe/models"
@@ -12,12 +11,12 @@ import (
 	"google.golang.org/api/option"
 )
 
-func PromptGemini(prompt string) string {
+func PromptGemini(prompt string) (string, error) {
 	ctx := context.Background()
 
 	client, err := genai.NewClient(ctx, option.WithAPIKey(os.Getenv("GEMINI_API_KEY")))
 	if err != nil {
-		log.Fatalf("helper-PromptGemini-genai.NewClient %v", err)
+		return "", fmt.Errorf("helper-PromptGemini-genai.NewClient: %w", err)
 	}
 	defer client.Close()
 
@@ -25,14 +24,14 @@ func PromptGemini(prompt string) string {
 
 	resp, err := model.GenerateContent(ctx, genai.Text(prompt))
 	if err != nil {
-		log.Fatalf("helper-PromptGemini-model.GenerateContent: %v", err)
+		return "", fmt.Errorf("helper-PromptGemini-model.GenerateContent: %w", err)
 	}
 
 	if len(resp.Candidates) == 0 || len(resp.Candidates[0].Content.Parts) == 0 {
-		return ""
+		return "", nil
 	}
 
-	return fmt.Sprintf("%v", resp.Candidates[0].Content.Parts[0])
+	return fmt.Sprintf("%v", resp.Candidates[0].Content.Parts[0]), nil
 }
 
 func AnalyzePictureWithGemini(imageFile []byte, prompt string) (string, error) {

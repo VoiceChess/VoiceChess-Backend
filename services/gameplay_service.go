@@ -68,9 +68,9 @@ func (s *GameplayService) CreateGame(userID string) (string, error) {
 
 func (s *GameplayService) GetHint(fen string) (string, error) {
 	prompt := fmt.Sprintf(models.HintPrompt, fen)
-	hint, err := helper.PromptAzureOpenAI(prompt)
+	hint, err := helper.PromptOllama(prompt)
 	if err != nil {
-		return "", fmt.Errorf("GameplayService-GetHint-PromptAzureOpenAI: %w", err)
+		return "", fmt.Errorf("GameplayService-GetHint-PromptOllama: %w", err)
 	}
 
 	return hint, nil
@@ -78,9 +78,9 @@ func (s *GameplayService) GetHint(fen string) (string, error) {
 
 func (s *GameplayService) PlayerMoveByVoiceTranscription(fen, transcription string) (models.PlayerMoveByTranscription, error) {
 	prompt := fmt.Sprintf(models.MoveFromDescriptionPrompt, fen, transcription)
-	move, err := helper.PromptAzureOpenAI(prompt)
+	move, err := helper.PromptOllama(prompt)
 	if err != nil {
-		return models.PlayerMoveByTranscription{}, fmt.Errorf("GameplayService-PlayerMoveByVoiceTranscription-PromptAzureOpenAI: %w", err)
+		return models.PlayerMoveByTranscription{}, fmt.Errorf("GameplayService-PlayerMoveByVoiceTranscription-PromptOllama: %w", err)
 	}
 	move = strings.TrimSpace(move)
 

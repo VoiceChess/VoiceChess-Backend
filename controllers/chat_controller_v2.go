@@ -196,7 +196,7 @@ Rules:
 Respond with ONLY the screen name (play/scan/lesson/analyze/setting), no additional text.
 `, req.Message)
 
-	response, err := helper.PromptAzureOpenAI(enhancedPrompt)
+	response, err := helper.PromptOllama(enhancedPrompt)
 	if err != nil {
 		log.Printf("Azure OpenAI API error, falling back to keyword matching: %v", err)
 		// Fallback to keyword matching

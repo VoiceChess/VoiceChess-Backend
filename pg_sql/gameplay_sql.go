@@ -10,6 +10,10 @@ var (
 	INSERT INTO public.games (user_id) VALUES ($1) RETURNING id;
 	`
 
+	GameBelongsToUser = `
+	SELECT EXISTS(SELECT 1 FROM public.games WHERE id = $1 AND user_id = $2);
+	`
+
 	DeleteLatestMove = `
 	WITH last_move AS (
 		SELECT id

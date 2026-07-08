@@ -8,7 +8,6 @@ import (
 )
 
 type Config struct {
-	GeminiAPIKey string
 	OllamaAPIURL string
 	OllamaModel  string
 	Port         string
@@ -22,7 +21,6 @@ func LoadConfig() *Config {
 	}
 
 	config := &Config{
-		GeminiAPIKey: os.Getenv("GEMINI_API_KEY"),
 		OllamaAPIURL: os.Getenv("OLLAMA_API_URL"),
 		OllamaModel:  getEnvOrDefault("OLLAMA_MODEL_NAME", "qwen2.5:3b"),
 		Port:         getEnvOrDefault("PORT", "8080"),
@@ -38,8 +36,4 @@ func getEnvOrDefault(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
-}
-
-func (c *Config) IsValid() bool {
-	return c.GeminiAPIKey != ""
 }

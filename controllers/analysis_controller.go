@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"samsungvoicebe/config"
+	"samsungvoicebe/middleware"
 	"samsungvoicebe/services"
 )
 
@@ -22,6 +23,12 @@ func NewAnalysisController(cfg *config.Config, service *services.AnalysisService
 
 func (ac *AnalysisController) GetGameHistoryList(c *gin.Context) {
 	userID := c.Param("user_id")
+	firebaseUID, _ := c.Get(middleware.FirebaseUIDKey)
+	if uid, ok := firebaseUID.(string); ok && uid != userID {
+		c.JSON(403, gin.H{"error": "user_id does not match authenticated user"})
+		return
+	}
+
 	gamesHistoryList, err := ac.Service.GetGameHistoryList(userID)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
@@ -41,7 +48,14 @@ func (ac *AnalysisController) GetAnalyzedMoveByOrder(c *gin.Context) {
 		return
 	}
 
-	analyzedMove, err := ac.Service.GetAnalyzedMoveByOrder(moveOrder, gameID)
+	firebaseUID, _ := c.Get(middleware.FirebaseUIDKey)
+	userID, ok := firebaseUID.(string)
+	if !ok || userID == "" {
+		c.JSON(401, gin.H{"error": "missing authenticated user"})
+		return
+	}
+
+	analyzedMove, err := ac.Service.GetAnalyzedMoveByOrder(moveOrder, gameID, userID)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return

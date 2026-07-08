@@ -16,7 +16,7 @@ type ChessResponse struct {
 	Winner    string `json:"winner,omitempty"`
 }
 
-type GeminiMoveAnalysis struct {
+type MoveIntentAnalysis struct {
 	IsValidRequest bool   `json:"is_valid_request"`
 	FromSquare     string `json:"from_square"`
 	ToSquare       string `json:"to_square"`

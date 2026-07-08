@@ -106,17 +106,17 @@ func (a *AnalysisService) GetGameHistoryList(userID string) ([]models.Game, erro
 	return games, nil
 }
 
-func (a *AnalysisService) GetAnalyzedMoveByOrder(moveOrder int, gameID string) (models.MoveAnalysis, error) {
+func (a *AnalysisService) GetAnalyzedMoveByOrder(moveOrder int, gameID, userID string) (models.MoveAnalysis, error) {
 	var analyzedMove models.MoveAnalysis
 	var currMoveAnalysis models.StockfishAnalysisResult
 
-	firstMove, err := a.analysisRepo.GetMoveByOrder(1, gameID)
+	firstMove, err := a.analysisRepo.GetMoveByOrder(1, gameID, userID)
 	if err != nil {
 		err = fmt.Errorf("AnalysisService-GetAnalyzedMoveByOrder-GetMoveByOrder: %w", err)
 		return models.MoveAnalysis{}, err
 	}
 
-	currMove, err := a.analysisRepo.GetMoveByOrder(moveOrder, gameID)
+	currMove, err := a.analysisRepo.GetMoveByOrder(moveOrder, gameID, userID)
 	if err != nil {
 		err = fmt.Errorf("AnalysisService-GetAnalyzedMoveByOrder-GetMoveByOrder: %w", err)
 		return models.MoveAnalysis{}, err
@@ -126,13 +126,13 @@ func (a *AnalysisService) GetAnalyzedMoveByOrder(moveOrder int, gameID string) (
 	var prevMoveBestMove string
 
 	if moveOrder > 2 || firstMove.Move != "black" {
-		prevMove, err = a.analysisRepo.GetMoveByOrder(moveOrder-1, gameID)
+		prevMove, err = a.analysisRepo.GetMoveByOrder(moveOrder-1, gameID, userID)
 		if err != nil {
 			err = fmt.Errorf("AnalysisService-GetAnalyzedMoveByOrder-GetMoveByOrder: %w", err)
 			return models.MoveAnalysis{}, err
 		}
 
-		prevMoveAnalysis, err := a.getMoveAnalysis(moveOrder-1, gameID)
+		prevMoveAnalysis, err := a.getMoveAnalysis(moveOrder-1, gameID, userID)
 		if err != nil {
 			err = fmt.Errorf("AnalysisService-GetAnalyzedMoveByOrder-getMoveAnalysis: %w", err)
 			return models.MoveAnalysis{}, err
@@ -140,7 +140,7 @@ func (a *AnalysisService) GetAnalyzedMoveByOrder(moveOrder int, gameID string) (
 
 		prevMoveBestMove = prevMoveAnalysis.BestMove
 
-		currMoveAnalysis, err = a.getMoveAnalysis(moveOrder, gameID)
+		currMoveAnalysis, err = a.getMoveAnalysis(moveOrder, gameID, userID)
 		if err != nil {
 			err = fmt.Errorf("AnalysisService-GetAnalyzedMoveByOrder-getMoveAnalysis: %w", err)
 			return models.MoveAnalysis{}, err
@@ -156,13 +156,13 @@ func (a *AnalysisService) GetAnalyzedMoveByOrder(moveOrder int, gameID string) (
 			analyzedMove.MoveGrade = a.classifyMove(&prevMoveAnalysis.Eval, &currMoveAnalysis.Eval, nil, nil)
 		}
 	} else if (moveOrder == 2 && firstMove.Move == "black") || moveOrder == 1 {
-		prevMove, err = a.analysisRepo.GetMoveByOrder(moveOrder, gameID)
+		prevMove, err = a.analysisRepo.GetMoveByOrder(moveOrder, gameID, userID)
 		if err != nil {
 			err = fmt.Errorf("AnalysisService-GetAnalyzedMoveByOrder-GetMoveByOrder: %w", err)
 			return models.MoveAnalysis{}, err
 		}
 
-		currMoveAnalysis, err = a.getMoveAnalysis(moveOrder, gameID)
+		currMoveAnalysis, err = a.getMoveAnalysis(moveOrder, gameID, userID)
 		if err != nil {
 			err = fmt.Errorf("AnalysisService-GetAnalyzedMoveByOrder-getMoveAnalysis: %w", err)
 			return models.MoveAnalysis{}, err
@@ -212,8 +212,8 @@ func (a *AnalysisService) GetAnalyzedMoveByOrder(moveOrder int, gameID string) (
 	return analyzedMove, nil
 }
 
-func (a *AnalysisService) getMoveAnalysis(moveOrder int, gameID string) (models.StockfishAnalysisResult, error) {
-	move, err := a.analysisRepo.GetMoveByOrder(moveOrder, gameID)
+func (a *AnalysisService) getMoveAnalysis(moveOrder int, gameID, userID string) (models.StockfishAnalysisResult, error) {
+	move, err := a.analysisRepo.GetMoveByOrder(moveOrder, gameID, userID)
 	if err != nil {
 		err = fmt.Errorf("AnalysisService-GetAnalyzedMoveByOrder-GetMoveByOrder: %w", err)
 		return models.StockfishAnalysisResult{}, err

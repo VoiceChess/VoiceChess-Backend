@@ -4,6 +4,10 @@
 .env.local
 .env.production
 
+# Firebase service account (SECRET - never commit)
+firebase-service-account.json
+*-firebase-adminsdk-*.json
+
 # Build artifacts
 main
 *.exe

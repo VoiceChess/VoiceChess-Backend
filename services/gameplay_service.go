@@ -22,6 +22,10 @@ func NewGameplayService(gameplayRepo *repo.GameplayRepo, analysisService *Analys
 	}
 }
 
+func (s *GameplayService) GameBelongsToUser(gameID, userID string) (bool, error) {
+	return s.gameplayRepo.GameBelongsToUser(gameID, userID)
+}
+
 func (s *GameplayService) PlayerMove(gameID *string, fen, move, botLevel string) (models.BotMove, error) {
 	if gameID != nil {
 		err := s.gameplayRepo.GameMove(*gameID, fen, move)

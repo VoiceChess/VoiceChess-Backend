@@ -31,6 +31,15 @@ func (r *GameplayRepo) CreateGame(userID string) (string, error) {
 	return gameID, nil
 }
 
+func (r *GameplayRepo) GameBelongsToUser(gameID, userID string) (bool, error) {
+	var exists bool
+	err := r.db.QueryRow(pg_sql.GameBelongsToUser, gameID, userID).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
+}
+
 func (r *GameplayRepo) UndoMove(gameID string) error {
 	_, err := r.db.Exec(pg_sql.DeleteLatestMove, gameID)
 	if err != nil {

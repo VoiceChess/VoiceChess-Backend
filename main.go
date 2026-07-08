@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	"samsungvoicebe/config"
 	"samsungvoicebe/db"
+	"samsungvoicebe/firebaseauth"
 	"samsungvoicebe/middleware"
 	"samsungvoicebe/repo"
 	"samsungvoicebe/routes"
@@ -25,6 +27,12 @@ func main() {
 	defer database.Close()
 
 	log.Println("✅ Database connected successfully")
+
+	firebaseAuthClient, err := firebaseauth.NewClient(context.Background())
+	if err != nil {
+		log.Fatal("❌ Failed to initialize Firebase auth:", err)
+	}
+	log.Println("✅ Firebase auth initialized successfully")
 
 	gameplayRepo := repo.NewGameplayRepo(database)
 	analysisRepo := repo.NewAnalysisRepo(database)
@@ -50,19 +58,21 @@ func main() {
 		})
 	})
 
-	chatApi := r.Group("/api/chat")
+	api := r.Group("/api", middleware.FirebaseAuth(firebaseAuthClient))
+
+	chatApi := api.Group("/chat")
 	routes.ChatRoutes(chatApi, cfg)
 
-	chessApi := r.Group("/api/chess")
+	chessApi := api.Group("/chess")
 	routes.ChessRoutes(chessApi, cfg)
 
-	gameplayApi := r.Group("/api/gameplay")
+	gameplayApi := api.Group("/gameplay")
 	routes.GameplayRoutes(gameplayApi, cfg, gameplayService)
 
-	analysisApi := r.Group("/api/analysis")
+	analysisApi := api.Group("/analysis")
 	routes.AnalysisRoutes(analysisApi, cfg, analysisService)
 
-	userApi := r.Group("/api/user")
+	userApi := api.Group("/user")
 	routes.UserRoutes(userApi, cfg, userService)
 
 	log.Printf("Base URL: http://localhost:%s/\n", cfg.Port)

@@ -99,7 +99,7 @@ func (cc *ChessController) handleAIMove(c *gin.Context, game *chess.Game, mode s
 }
 
 func (cc *ChessController) handlePlayerMove(c *gin.Context, req models.ChessRequest, game *chess.Game) {
-	analysis, err := cc.analyzeMoveTWithGemini(req.Message, req.Fen)
+	analysis, err := cc.analyzeMoveWithOllama(req.Message, req.Fen)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ChessResponse{
 			Error: "Failed to analyze move: " + err.Error(),
@@ -287,7 +287,7 @@ func (cc *ChessController) isSquareUnderAttack(square chess.Square, game *chess.
 	return false
 }
 
-func (cc *ChessController) findMoveFromAnalysis(analysis *models.GeminiMoveAnalysis, game *chess.Game) (*chess.Move, error) {
+func (cc *ChessController) findMoveFromAnalysis(analysis *models.MoveIntentAnalysis, game *chess.Game) (*chess.Move, error) {
 	validMoves := game.ValidMoves()
 
 	if analysis.FromSquare != "" && analysis.ToSquare != "" {
@@ -391,7 +391,7 @@ func (cc *ChessController) getWinner(game *chess.Game) string {
 	}
 }
 
-func (cc *ChessController) analyzeMoveTWithGemini(message, fen string) (*models.GeminiMoveAnalysis, error) {
+func (cc *ChessController) analyzeMoveWithOllama(message, fen string) (*models.MoveIntentAnalysis, error) {
 	prompt := fmt.Sprintf(`
 Analyze this chess move request and extract the move information.
 
@@ -471,9 +471,9 @@ If the message is clearly not about making a chess move, set is_valid_request to
 
 	response = strings.TrimSpace(response)
 
-	var analysis models.GeminiMoveAnalysis
+	var analysis models.MoveIntentAnalysis
 	if err := json.Unmarshal([]byte(response), &analysis); err != nil {
-		return nil, fmt.Errorf("failed to parse Gemini response: %v", err)
+		return nil, fmt.Errorf("failed to parse Ollama response: %v", err)
 	}
 
 	return &analysis, nil

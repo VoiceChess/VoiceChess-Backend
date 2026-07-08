@@ -3,6 +3,7 @@ package controllers
 import (
 	"github.com/gin-gonic/gin"
 	"samsungvoicebe/config"
+	"samsungvoicebe/middleware"
 	"samsungvoicebe/models"
 	"samsungvoicebe/services"
 )
@@ -24,6 +25,12 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 
 	if err := c.BindJSON(&req); err != nil {
 		c.JSON(400, gin.H{"error": "Invalid request payload"})
+		return
+	}
+
+	firebaseUID, _ := c.Get(middleware.FirebaseUIDKey)
+	if uid, ok := firebaseUID.(string); ok && uid != req.UserID {
+		c.JSON(403, gin.H{"error": "user_id does not match authenticated user"})
 		return
 	}
 

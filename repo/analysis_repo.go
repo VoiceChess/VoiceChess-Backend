@@ -15,9 +15,9 @@ func NewAnalysisRepo(db *sql.DB) *AnalysisRepo {
 	return &AnalysisRepo{db: db}
 }
 
-func (r *AnalysisRepo) GetMoveByOrder(moveOrder int, gameID string) (models.Move, error) {
+func (r *AnalysisRepo) GetMoveByOrder(moveOrder int, gameID, userID string) (models.Move, error) {
 	var move models.Move
-	err := r.db.QueryRow(pg_sql.GetMoveByOrder, gameID, moveOrder).Scan(&move.Move, &move.Fen)
+	err := r.db.QueryRow(pg_sql.GetMoveByOrder, gameID, moveOrder, userID).Scan(&move.Move, &move.Fen)
 	if err != nil {
 		return models.Move{}, err
 	}

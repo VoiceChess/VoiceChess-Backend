@@ -14,7 +14,8 @@ var (
 	`
 
 	GetMoveByOrder = `
-	SELECT move, fen FROM public.moves
-		WHERE game_id = $1 AND move_order = $2;
+	SELECT moves.move, moves.fen FROM public.moves
+		INNER JOIN public.games ON games.id = moves.game_id
+		WHERE moves.game_id = $1 AND moves.move_order = $2 AND games.user_id = $3;
 	`
 )

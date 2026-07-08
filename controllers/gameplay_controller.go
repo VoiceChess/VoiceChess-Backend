@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"samsungvoicebe/config"
+	"samsungvoicebe/middleware"
 	"samsungvoicebe/models"
 	"samsungvoicebe/services"
 )
@@ -24,6 +25,16 @@ func NewGameplayController(cfg *config.Config, service *services.GameplayService
 
 func (gc *GameplayController) PlayerMove(c *gin.Context) {
 	gameID := c.Param("game_id")
+	firebaseUID, _ := c.Get(middleware.FirebaseUIDKey)
+	userID, _ := firebaseUID.(string)
+
+	if gameID != "" {
+		ownsGame, err := gc.Service.GameBelongsToUser(gameID, userID)
+		if err != nil || !ownsGame {
+			c.JSON(http.StatusForbidden, gin.H{"error": "game does not belong to authenticated user"})
+			return
+		}
+	}
 
 	var req models.PlayerMoveRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -54,6 +65,11 @@ func (gc *GameplayController) PlayerMove(c *gin.Context) {
 
 func (gc *GameplayController) CreateGame(c *gin.Context) {
 	userID := c.Param("user_id")
+	firebaseUID, _ := c.Get(middleware.FirebaseUIDKey)
+	if uid, ok := firebaseUID.(string); ok && uid != userID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "user_id does not match authenticated user"})
+		return
+	}
 
 	gameID, err := gc.Service.CreateGame(userID)
 	if err != nil {
@@ -113,8 +129,16 @@ func (gc *GameplayController) PlayerMoveByVoiceTranscription(c *gin.Context) {
 
 func (gc *GameplayController) UndoMove(c *gin.Context) {
 	gameID := c.Param("game_id")
+	firebaseUID, _ := c.Get(middleware.FirebaseUIDKey)
+	userID, _ := firebaseUID.(string)
 
-	err := gc.Service.UndoMove(gameID)
+	ownsGame, err := gc.Service.GameBelongsToUser(gameID, userID)
+	if err != nil || !ownsGame {
+		c.JSON(http.StatusForbidden, gin.H{"error": "game does not belong to authenticated user"})
+		return
+	}
+
+	err = gc.Service.UndoMove(gameID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		log.Println("GameplayController-UndoMove-UndoMove", err)
